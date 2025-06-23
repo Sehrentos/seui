@@ -1,0 +1,41 @@
+/* simple reset */
+html,
+body {
+	margin: 0;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	font-size: 1em;
+	background: #e7e7e7;
+	color: #252525;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0 auto;
+	max-width: 60%;
+}
+
+nav {
+	color: #696969;
+}
+
+a {
+	color: #ef5a00;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.anim-spin {
+	animation: spin 8s infinite linear;
+}
+
+@keyframes spin {
+	100% {
+		transform: rotate(360deg);
+	}
+}

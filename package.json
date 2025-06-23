@@ -1,0 +1,18 @@
+{
+	"private": true,
+	"name": "seui",
+	"version": "1.0.0",
+	"description": "SEUI javascript UI library",
+	"main": "seui.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node ./tests/server/server.js"
+	},
+	"keywords": [
+		"js",
+		"ui",
+		"library"
+	],
+	"author": "Niko Hyrkäs",
+	"license": "MIT"
+}
