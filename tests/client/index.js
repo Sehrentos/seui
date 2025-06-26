@@ -4,6 +4,7 @@ import Home from "./pages/Home.js"
 import Info from "./pages/Info.js"
 import Contact from "./pages/Contact.js"
 import ErrorPage from "./pages/ErrorPage.js"
+import MyReactiveComponent from "./event-driven-observer/MyReactiveComponent.js"
 
 console.time("#app-start")
 
@@ -14,6 +15,7 @@ router(document.body, "/", {
 	"/": Home, // also the default route
 	"/info": Info,
 	"/contact": Contact,
+	"/event-driven-observer": MyReactiveComponent, // event driven observer sample
 	"#!/sample/(.*)": (prev, now) => { // uses RegExp search
 		console.log(`3. Navigated from ${prev} to ${now}`)
 		document.body.replaceChildren(tags.div("Hello! You have navigated to the sample page."))

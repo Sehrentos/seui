@@ -4,7 +4,7 @@
  * @license MIT
  */
 /**
- * @typedef {{[key:string]:(...args:any[])=>Node}} TagsProxy a proxy object for HTML tags
+ * @typedef {{[key:string]:(...args:any[])=>HTMLElement}} TagsProxy a proxy object for HTML tags
  *
  * @typedef {{[key:string]:(prev:string,now:string)=>any}} TRoute a route object
  */
