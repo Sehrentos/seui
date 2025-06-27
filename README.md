@@ -145,7 +145,7 @@ Here is a list of custom events or callback used by the library:
 	```
 
 ### Samples
- - See sample client code in the [tests/client/index.js](tests/client/index.js) directory.
+ - See sample client code in the [docs/index.js](docs/index.js) directory.
  - There is also a local test server [tests/server/server.js](tests/server/server.js) run it with command:
 	```bash
 	npm run test
