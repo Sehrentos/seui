@@ -7,7 +7,7 @@ const HOST = "127.0.0.1"
 const PORT = 3000
 const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url))
 const ROOT_DIR = path.join(SERVER_DIR, '../../')
-const WWW_ROOT = path.join(SERVER_DIR, '../client')
+const WWW_ROOT = path.join(ROOT_DIR, 'docs')
 
 const server = http.createServer(async (req, res) => {
 	try {

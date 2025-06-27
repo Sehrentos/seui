@@ -1,5 +1,5 @@
 // seui esm sample
-import { tags, router } from "../../seui.js"
+import { tags, router } from "../seui.js"
 import Home from "./pages/Home.js"
 import Info from "./pages/Info.js"
 import Contact from "./pages/Contact.js"

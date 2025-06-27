@@ -1,4 +1,4 @@
-import { tags, fragment } from "../../../seui.js"
+import { tags, fragment } from "../../seui.js"
 import SampleTimer from "../components/SampleTimer.js"
 import SampleDialog from "../components/SampleDialog.js"
 import SVGWorld from "../components/SVGWorld.js"
