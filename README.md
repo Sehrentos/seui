@@ -10,7 +10,7 @@ SEUI is a JavaScript UI library focused on creating simple components.
 Quick example:
 ```javascript
 import { tags, fragment, router } from "./seui.js"
-const { a, p, h1, div, nav, form, textarea, input } = tags
+const { a, b, p, h1, div, nav, form, textarea, input } = tags
 
 function Home() {
 	return fragment( // with fragment you can combine multiple elements without rendering extra div
