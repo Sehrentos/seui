@@ -7,6 +7,72 @@ SEUI is a JavaScript UI library focused on creating simple components.
 > [!WARNING]
 > This is a **demo only**. Expect bugs and unfinished functionality.
 
+Quick example:
+```javascript
+import { tags, fragment, router } from "./seui.js"
+const { a, p, h1, div, nav, form, textarea, input } = tags
+
+function Home() {
+	return fragment( // with fragment you can combine multiple elements without rendering extra div
+		h1("Home page"),
+		nav(
+			a({ href: "#!/" }, "Home"),
+			a({ href: "#!/contact" }, "Contact"),
+		),
+		p("This is a paragraph, ", b("Some Bold Red Text!", { style: { color: "red" } }))
+	)
+}
+
+// can be extracted to ./components/ContactForm.js:
+const ContactForm = () => form(
+	{
+		id: "contact-form",
+		onsubmit: (e) => {
+			e.preventDefault()
+			const formData = new FormData(e.target)
+			const json = JSON.stringify(Object.fromEntries(formData))
+			alert(`TODO: demo send ${json}`)
+		}
+	},
+	input({ id: "name", name: "name", type: "text", placeholder: "Name...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
+	input({ id: "email", name: "email", type: "email", placeholder: "Email...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
+	textarea({ id: "message", name: "message", placeholder: "Message...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
+	input({ type: "submit", value: "Send" })
+)
+
+function Contact() {
+	return div(
+		h1("Contact"),
+		nav(
+			a({ href: "#!/" }, "Home"),
+			a({ href: "#!/contact" }, "Contact"),
+		),
+		p("Lorem ipsum dolor sit amet..."),
+		ContactForm(),
+	)
+}
+
+// initialize the app using router
+// this will handle the routing based on the URL hash
+// and render the corresponding page
+router(document.body, "/", {
+	"/": Home, // also the default route
+	"/info": Info,
+	"/contact": Contact,
+	// sample error route
+	"#!/error/(.+)": (prev, now) => { // custom error route
+		console.log(`Error route navigated from ${prev} to ${now}`)
+		// take the error message and decode uri component
+		const matches = now.match(/#!\/error\/(.+)/)
+		const message = matches == null ? "" : decodeURIComponent(matches[1])
+		document.body.replaceChildren(tags.div("Error! You have navigated to the error page."), tags.pre(message))
+		return false // stop further processing
+	},
+	// optional. sample error page
+	// "#!/error/(.+)": ErrorPage,
+})
+```
+
 ## Table of Contents
 -----------------
 
