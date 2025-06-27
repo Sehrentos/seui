@@ -18,7 +18,7 @@
 	"include": [
 		"**/*.js",
 		"**/*.ts"
-, "../seui-global.js", "../seui-esm.js"	],
+	],
 	"typeAcquisition": {
 		"enable": true,
 		"include": []

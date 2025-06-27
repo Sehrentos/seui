@@ -8,7 +8,7 @@ import fs from "fs"
 import path from "path"
 
 const readFile = path.join(process.cwd(), "seui.js")
-const writeFile = path.join(process.cwd(), "seui-global.js")
+const writeFile = path.join(process.cwd(), "docs", "seui-global.js")
 const data = fs.readFileSync(readFile, "utf-8")
 
 // find and replace:
@@ -18,3 +18,6 @@ const code = data.replace(/export\s+{([^}]+)}/g, "root.seui = { $1 }\n")
 // write into IIFE
 fs.writeFileSync(writeFile, `(function(root){\n"use strict";\n${code}})(this||window);`)
 console.log(`seui.js built to ${writeFile}`)
+
+// also copy the seui.js file into /docs for github pages
+fs.copyFileSync(readFile, path.join(process.cwd(), "docs", "seui.js"))

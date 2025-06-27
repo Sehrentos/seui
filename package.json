@@ -8,8 +8,8 @@
 	"scripts": {
 		"build": "npm run build-global && npm run minify && npm run minify-global",
 		"build-global": "node ./build-global.js",
-		"minify": "terser seui.js -o seui.min.js --compress --mangle",
-		"minify-global": "terser seui-global.js -o seui-global.min.js --compress --mangle",
+		"minify": "terser seui.js -o docs/seui.min.js --compress --mangle",
+		"minify-global": "terser docs/seui-global.js -o docs/seui-global.min.js --compress --mangle",
 		"test": "node ./tests/server/server.js",
 		"start": "echo \"No start script defined, use 'npm run test' for local test server\""
 	},

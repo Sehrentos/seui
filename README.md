@@ -2,6 +2,8 @@
 
 SEUI is a JavaScript UI library focused on creating simple components.
 
+See demo page [here](https://sehrentos.github.io/seui/).
+
 ---
 
 > [!WARNING]
