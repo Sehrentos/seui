@@ -3,10 +3,15 @@
 	"name": "seui",
 	"version": "1.0.0",
 	"description": "SEUI javascript UI library",
+	"type": "module",
 	"main": "seui.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "node ./tests/server/server.js"
+		"build": "npm run build-global && npm run minify && npm run minify-global",
+		"build-global": "node ./build-global.js",
+		"minify": "terser seui.js -o seui.min.js --compress --mangle",
+		"minify-global": "terser seui-global.js -o seui-global.min.js --compress --mangle",
+		"test": "node ./tests/server/server.js",
+		"start": "echo \"No start script defined, use 'npm run test' for local test server\""
 	},
 	"keywords": [
 		"js",

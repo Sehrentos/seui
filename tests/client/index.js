@@ -5,6 +5,8 @@ import Info from "./pages/Info.js"
 import Contact from "./pages/Contact.js"
 import ErrorPage from "./pages/ErrorPage.js"
 import MyReactiveComponent from "./event-driven-observer/MyReactiveComponent.js"
+import MyReactiveComponentWithObserver from "./observer-pattern/MyReactiveComponentWithObserver.js"
+import MyReactiveComponentWithProxy from "./observable-proxy/MyReactiveComponentWithProxy.js"
 
 console.time("#app-start")
 
@@ -16,6 +18,8 @@ router(document.body, "/", {
 	"/info": Info,
 	"/contact": Contact,
 	"/event-driven-observer": MyReactiveComponent, // event driven observer sample
+	"/observer-pattern": MyReactiveComponentWithObserver, // observable sample
+	"/observable-proxy": MyReactiveComponentWithProxy, // proxy sample
 	"#!/sample/(.*)": (prev, now) => { // uses RegExp search
 		console.log(`3. Navigated from ${prev} to ${now}`)
 		document.body.replaceChildren(tags.div("Hello! You have navigated to the sample page."))

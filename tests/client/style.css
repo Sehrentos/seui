@@ -30,6 +30,11 @@ a:hover {
 	text-decoration: underline;
 }
 
+a:not([href]) {
+	color: #696969;
+	text-decoration: underline;
+}
+
 .anim-spin {
 	animation: spin 8s infinite linear;
 }

@@ -1,7 +1,8 @@
 import { tags } from "../../../seui.js";
+import Navigation from "../components/Navigation.js";
 import { appState, stateDispatcher } from "./state-manager.js"; // Import your state manager
 
-const { div, p, button, span, h1 } = tags; // Destructure tags from seui.js
+const { a, div, p, button, span, h1 } = tags; // Destructure tags from seui.js
 
 /**
  * MyReactiveComponent is a demo of how to create a reactive component
@@ -33,6 +34,11 @@ export default function MyReactiveComponent() {
 
 	return div(
 		h1("Reactive Counter & User (Custom Events)"),
+		Navigation(
+			a({ href: "#!/" }, "Home"),
+			a({ href: "#!/event-driven-observer" }, "Event Driven Observer"),
+		),
+		p("Demo of how to create a reactive component by using events dispatched by the state manager."),
 		p("Current Count: ", counterSpan),
 		userNameP,
 		button(

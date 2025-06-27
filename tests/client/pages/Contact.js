@@ -1,6 +1,7 @@
 import { tags } from "../../../seui.js"
+import Navigation from "../components/Navigation.js"
 
-const { a, p, h1, div, nav, form, textarea, fieldset, legend, label, input } = tags
+const { a, p, h1, div, form, textarea, fieldset, legend, label, input } = tags
 
 const Input = (labelText, props = {}) => {
 	const inputProps = { id: "input-a", name: "input-a", type: "text", placeholder: "...", ...props }
@@ -41,9 +42,9 @@ const ContactForm = () => form(
 export default function Contact() {
 	return div(
 		h1("Contact"),
-		nav(
-			a({ href: "#!/" }, "› Home"),
-			" › Contact",
+		Navigation(
+			a({ href: "#!/" }, "Home"),
+			a({ href: "#!/contact" }, "Contact"),
 		),
 		p("Lorem ipsum dolor sit amet..."),
 		ContactForm(),

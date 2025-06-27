@@ -1,8 +1,9 @@
 /*!
- * seui.js v1.0.0 (esm)
- * @author Niko Hyrkäs <https://github.com/sehrentos>
+ * seui.js v1.0.0
+ * @author Niko H. <https://github.com/Sehrentos/seui>
  * @license MIT
  */
+
 /**
  * @typedef {{[key:string]:(...args:any[])=>HTMLElement}} TagsProxy a proxy object for HTML tags
  *
@@ -69,32 +70,25 @@ const tags = new Proxy({}, {
  */
 function processChildren(el, children) {
 	for (const child of children) {
-		if (child != null) {
-			if (typeof child === "string" || child instanceof String) {
-				// if child is a string, append it as text node
-				// or set it as value if the element is an input
-				// @ts-ignore
-				if (typeof el.value === "undefined") {
-					// @ts-ignore both string and String are valid
-					el.appendChild(document.createTextNode(child))
-				} else {
-					// @ts-ignore el.value is valid for input elements
-					el.value = child
-				}
-			} else if (
-				typeof child.appendChild === "function" ||
-				child instanceof Element
-			) {
-				// if child is an element, append it
-				el.appendChild(child)
-			} else if (child.constructor === Object) {
-				// if child is an object, merge it with the element
-				merge(el, child)
-				// invoke oncreate if it exists
-				if (typeof child.oncreate === "function") {
-					child.oncreate(el)
-				}
-			}
+		if (child == null) {
+			continue;
+		}
+		if (typeof child === "string") {
+			// add string as text node
+			el.appendChild(document.createTextNode(child))
+		} else if (child instanceof String) {
+			// add String as text node
+			el.appendChild(document.createTextNode(child.toString()))
+		} else if (typeof child.appendChild === "function" || child instanceof Element) {
+			// add as element
+			el.appendChild(child)
+		} else if (child.constructor === Object) {
+			// merge plain objects
+			merge(el, child)
+		}
+		// invoke the custom oncreate if it exists
+		if (typeof child.oncreate === "function") {
+			child.oncreate(el)
 		}
 	}
 }

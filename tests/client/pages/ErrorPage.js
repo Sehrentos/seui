@@ -1,6 +1,7 @@
 import { tags } from "../../../seui.js"
+import Navigation from "../components/Navigation.js"
 
-const { a, p, h1, div, nav, pre } = tags
+const { a, p, h1, div, pre } = tags
 
 export default function ErrorPage() {
 	// take the error message and decode uri component
@@ -9,9 +10,9 @@ export default function ErrorPage() {
 
 	return div(
 		h1("Error"),
-		nav(
-			a({ href: "#!/" }, "› Home"),
-			" › Error",
+		Navigation(
+			a({ href: "#!/" }, "Home"),
+			a("Error"),
 		),
 		p("Details:"),
 		pre(message),

@@ -1,10 +1,13 @@
-const http = require('http')
-const path = require('path')
-const { access, constants, readFile } = require('fs/promises')
+import http from 'http'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { access, constants, readFile } from 'fs/promises'
 
 const HOST = "127.0.0.1"
 const PORT = 3000
-const WWW_ROOT = path.join(__dirname, '../client')
+const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url))
+const ROOT_DIR = path.join(SERVER_DIR, '../../')
+const WWW_ROOT = path.join(SERVER_DIR, '../client')
 
 const server = http.createServer(async (req, res) => {
 	try {
@@ -30,7 +33,7 @@ const server = http.createServer(async (req, res) => {
 
 		// serve the ESM library for testing
 		if (url.pathname === '/seui.js') {
-			const data = await readFile(path.join(__dirname, '../../', url.pathname))
+			const data = await readFile(path.join(ROOT_DIR, url.pathname))
 			res.writeHead(200, {
 				'Content-Type': 'application/javascript',
 				'content-length': data.length
@@ -41,7 +44,7 @@ const server = http.createServer(async (req, res) => {
 
 		// serve the global library for testing
 		if (url.pathname === '/seui-global.js') {
-			const data = await readFile(path.join(__dirname, '../../', url.pathname))
+			const data = await readFile(path.join(ROOT_DIR, url.pathname))
 			res.writeHead(200, {
 				'Content-Type': 'application/javascript',
 				'content-length': data.length
