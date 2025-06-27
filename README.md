@@ -57,7 +57,6 @@ function Contact() {
 // and render the corresponding page
 router(document.body, "/", {
 	"/": Home, // also the default route
-	"/info": Info,
 	"/contact": Contact,
 	// sample error route
 	"#!/error/(.+)": (prev, now) => { // custom error route
