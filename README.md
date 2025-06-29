@@ -145,18 +145,6 @@ Here is a list of custom events or callback used by the library:
 
 ### Samples
  - See sample client code in the [docs/index.js](docs/index.js) directory.
- - There is also a local test server [tests/server/server.js](tests/server/server.js) run it with command:
-	```bash
-	npm run test
-	```
-	Then open the browser (Windows)
-	```bash
-	explorer "http://127.0.0.1:3000"
-	```
-	and for other
-	```bash
-	open "http://127.0.0.1:3000"
-	```
 
 ## Contributing
 All contributions are welcome.
