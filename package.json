@@ -6,9 +6,7 @@
 	"type": "module",
 	"main": "seui.js",
 	"scripts": {
-		"minify": "terser seui.js -o seui.min.js --compress --mangle",
-		"test": "node ./tests/server/server.js",
-		"start": "echo \"No start script defined, use 'npm run test' for local test server\""
+		"minify": "terser seui.js -o seui.min.js --compress --mangle"
 	},
 	"keywords": [
 		"js",
