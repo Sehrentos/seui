@@ -86,7 +86,6 @@ router(document.body, "/", {
 	- [Documentation](#documentation)
 		- [Events](#events)
 		- [Samples](#samples)
-		- [Building](#building)
 	- [Contributing](#contributing)
 	- [License](#license)
 
@@ -158,19 +157,6 @@ Here is a list of custom events or callback used by the library:
 	```bash
 	open "http://127.0.0.1:3000"
 	```
-
-### Building
-Here are some commands to re-build the project when you modify the source code.
-
-> [!NOTE]
-> Some commands require global terser module to be installed (this is an optional step to minify the source code).
-
-Combine `npm run build-global && npm run minify && npm run minify-global` with single command:
-(this will build `seui-global.js` and minify it and the `seui.min.js` file.)
-
-```bash
-npm run build
-```
 
 ## Contributing
 All contributions are welcome.

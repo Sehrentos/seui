@@ -41,34 +41,23 @@ const tags = new Proxy({}, {
 			if (typeof prop !== "string") {
 				throw new TypeError("Property name must be a string")
 			}
-			const container = document.createDocumentFragment()
-			const el = document.createElement(prop)
-			processChildren(el, children)
-			return container.appendChild(el)
+			return createElement(prop, children)
 		}
 	}
 })
 
 /**
- * Process children or properties of an element.
- * Invoke custom `oncreate` function if provided, that is invoked before element is added into DOM.
- * @param {Element} el parent element
- * @param {Array<any>} children array of children
- * @example
- * processChild(
- *   document.createElement('div'),
- *   [
- *     "Hello",
- *     document.createElement('p'),
- *     {
- *       style: {
- *         color: 'red'
- *       }
- *     }
- *   ]
- * )
+ * Create an HTML element with the specified tag and append children to it.
+ * @param {string} tag - The type of element to be created.
+ * @param {Array<any>} children - The children to append to the created element.
+ * @returns {HTMLElement|DocumentFragment} The created element with appended children.
+ * @throws {TypeError} If the tag is not a string.
  */
-function processChildren(el, children) {
+function createElement(tag, children) {
+	// const container = document.createDocumentFragment()
+	const el = tag === "fragment" ? document.createDocumentFragment() : document.createElement(tag)
+	// Process children or properties of an element.
+	// Invoke custom `oncreate` function if provided, that is invoked before element is added into DOM.
 	for (const child of children) {
 		if (child == null) {
 			continue;
@@ -91,6 +80,8 @@ function processChildren(el, children) {
 			child.oncreate(el)
 		}
 	}
+	// return container.appendChild(el)
+	return el
 }
 
 /**
@@ -274,4 +265,4 @@ function remove() {
 }
 // #endregion router
 
-export { tags, fragment, ns, merge, router, update, remove }
+export { tags, fragment, ns, createElement, merge, router, update, remove }

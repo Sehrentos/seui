@@ -1,4 +1,4 @@
-import { tags } from "../seui.js";
+import { tags } from "../../seui.js";
 import Navigation from "../components/Navigation.js";
 import Observable from "./Observable.js";
 const { a, h1, p, div, button } = tags;
