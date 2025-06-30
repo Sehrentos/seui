@@ -11,17 +11,40 @@ See demo page [here](https://sehrentos.github.io/seui/).
 
 Quick example:
 ```javascript
-import { tags, fragment, router } from "./seui.js"
-const { a, b, p, h1, div, nav, form, textarea, input } = tags
+import { tags } from "../seui.js"
+import Router, { onceNavigate } from "../Router.js"
+import Observable from "../Observable.js"
+
+const { a, b, p, h1, div, nav, form, span, textarea, button, input, fragment } = tags
+const router = new Router()
+
+// global state counter
+const counter = new Observable(0)
 
 function Home() {
+	// or use the local state
+	// const counter = new Observable(0)
+	const counterSpan = span(counter.value.toString())
+	const counterObserver = counter.subscribe(newValue => counterSpan.textContent = newValue.toString())
+
+	// cleanup routine on route change
+	onceNavigate((e) => {
+		console.log(`cleanup from: ${e.oldURL} to: ${e.newURL}`)
+		counter.unsubscribe(counterObserver)
+	})
+
 	return fragment( // with fragment you can combine multiple elements without rendering extra div
 		h1("Home page"),
 		nav(
 			a({ href: "#!/" }, "Home"),
+			" | ",
 			a({ href: "#!/contact" }, "Contact"),
 		),
-		p("This is a paragraph, ", b("Some Bold Red Text!", { style: { color: "red" } }))
+		p("This is a paragraph, ", b("Some Bold Red Text!", { style: { color: "red" } })),
+		p("Counter: ", counterSpan),
+		button("Increment", {
+			onclick: () => counter.update(c => c + 1)
+		}),
 	)
 }
 
@@ -47,6 +70,7 @@ function Contact() {
 		h1("Contact"),
 		nav(
 			a({ href: "#!/" }, "Home"),
+			" | ",
 			a({ href: "#!/contact" }, "Contact"),
 		),
 		p("Lorem ipsum dolor sit amet..."),
@@ -57,7 +81,7 @@ function Contact() {
 // initialize the app using router
 // this will handle the routing based on the URL hash
 // and render the corresponding page
-router(document.body, "/", {
+router.router(document.body, "/", {
 	"/": Home, // also the default route
 	"/contact": Contact,
 	// sample error route
@@ -80,7 +104,6 @@ router(document.body, "/", {
 - [SEUI: Simple JavaScript UI Components](#seui-simple-javascript-ui-components)
 	- [Table of Contents](#table-of-contents)
 	- [Installation](#installation)
-		- [Terser for optional JS minification](#terser-for-optional-js-minification)
 	- [Usage](#usage)
 	- [Features](#features)
 	- [Documentation](#documentation)
@@ -92,20 +115,6 @@ router(document.body, "/", {
 ## Installation
 ---------------
 TODO: make into npm module and provide installation steps.
-
-### Terser for optional JS minification
-This is optional, but this way you can minify JS files.
-```bash
-npm install terser -g
-```
-Then use the npm command:
-```bash
-npm run minify
-```
-Or [Terser CLI](https://www.npmjs.com/package/terser#command-line-usage) to minify specific JS file with command:
-```bash
-terser seui.js -o seui.min.js --compress --mangle
-```
 
 ## Usage
 To use SEUI in your project, import the library and start using its components:
@@ -125,7 +134,6 @@ const App = () => {
 These are the main features this library provides:
  - tags - create HTML elements
  - ns - create namespace elements
- - fragment - create fragment element
  - router - create router
 
 ## Documentation
