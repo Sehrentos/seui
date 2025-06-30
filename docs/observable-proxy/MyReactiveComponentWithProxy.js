@@ -1,4 +1,4 @@
-import { tags } from "../../SeUI.js";
+import { tags } from "../../seui.js";
 import Navigation from "../components/Navigation.js";
 import createReactive from "./createReactive.js";
 

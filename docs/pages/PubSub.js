@@ -1,4 +1,4 @@
-import { tags } from "../../SeUI.js"
+import { tags } from "../../seui.js"
 import Observable from "../../Observable.js"
 import Navigation from "../components/Navigation.js"
 import { globalState } from "../state.js"

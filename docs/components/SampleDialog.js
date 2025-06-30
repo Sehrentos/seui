@@ -1,4 +1,4 @@
-import { tags } from "../../SeUI.js"
+import { tags } from "../../seui.js"
 
 const { p, h1, dialog } = tags
 

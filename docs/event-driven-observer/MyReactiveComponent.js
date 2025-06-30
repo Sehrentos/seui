@@ -1,4 +1,4 @@
-import { tags } from "../../SeUI.js";
+import { tags } from "../../seui.js";
 import Navigation from "../components/Navigation.js";
 import { appState, stateDispatcher } from "./state-manager.js"; // Import your state manager
 

@@ -1,4 +1,4 @@
-import { ns } from "../../SeUI.js"
+import { ns } from "../../seui.js"
 
 /**
  * svg world icon
