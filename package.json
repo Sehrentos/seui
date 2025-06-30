@@ -4,7 +4,7 @@
 	"version": "1.0.0",
 	"description": "SEUI javascript UI library",
 	"type": "module",
-	"main": "SeUI.js",
+	"main": "seui.js",
 	"author": "Niko Hyrkäs",
 	"license": "MIT"
 }
