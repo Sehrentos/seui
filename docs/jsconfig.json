@@ -18,7 +18,7 @@
 	"include": [
 		"**/*.js",
 		"**/*.ts"
-	],
+, "../Observable.js"	],
 	"typeAcquisition": {
 		"enable": true,
 		"include": []

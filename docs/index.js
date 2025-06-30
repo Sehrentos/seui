@@ -1,22 +1,41 @@
-// seui esm sample
-import { tags, router } from "../seui.js"
+// sample app with routing
+import { tags } from "../SeUI.js"
+import Router from "../Router.js"
 import Home from "./pages/Home.js"
 import Info from "./pages/Info.js"
 import Contact from "./pages/Contact.js"
+import PubSub from "./pages/PubSub.js"
 import ErrorPage from "./pages/ErrorPage.js"
 import MyReactiveComponent from "./event-driven-observer/MyReactiveComponent.js"
 import MyReactiveComponentWithObserver from "./observer-pattern/MyReactiveComponentWithObserver.js"
 import MyReactiveComponentWithProxy from "./observable-proxy/MyReactiveComponentWithProxy.js"
 
-console.time("#app-start")
+// note: extract the router to a separate file e.g. router.js,
+// when you need to access it, import it and use it in multiple places
+const router = new Router()
 
-// initialize the app using router
-// this will handle the routing based on the URL hash
-// and render the corresponding page
-router(document.body, "/", {
+// to manually update the router or do a refresh (repaint the page)
+// router.update()
+
+// to move to a specific route use:
+// router.go("#!/info")
+// equivalent to:
+// window.location.hash = "#!/info"
+
+// to move back in the browser history
+// router.back()
+// equivalent to:
+// window.history.back()
+
+// to remove the router listeners
+// router.remove()
+
+// setup the router
+router.router(document.body, "/", {
 	"/": Home, // also the default route
 	"/info": Info,
 	"/contact": Contact,
+	"/pubsub": PubSub, // observable tests
 	"/event-driven-observer": MyReactiveComponent, // event driven observer sample
 	"/observer-pattern": MyReactiveComponentWithObserver, // observable sample
 	"/observable-proxy": MyReactiveComponentWithProxy, // proxy sample
@@ -37,5 +56,3 @@ router(document.body, "/", {
 	// sample error page
 	"#!/error/(.+)": ErrorPage,
 })
-
-console.timeEnd("#app-start")

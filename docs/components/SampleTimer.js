@@ -1,4 +1,4 @@
-import { tags } from "../../seui.js"
+import { tags } from "../../SeUI.js"
 
 const { strong, span } = tags
 

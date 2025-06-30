@@ -4,15 +4,7 @@
 	"version": "1.0.0",
 	"description": "SEUI javascript UI library",
 	"type": "module",
-	"main": "seui.js",
-	"scripts": {
-		"minify": "terser seui.js -o seui.min.js --compress --mangle"
-	},
-	"keywords": [
-		"js",
-		"ui",
-		"library"
-	],
+	"main": "SeUI.js",
 	"author": "Niko Hyrkäs",
 	"license": "MIT"
 }

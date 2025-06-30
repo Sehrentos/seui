@@ -1,4 +1,4 @@
-import { tags } from "../../seui.js"
+import { tags } from "../../SeUI.js"
 import Navigation from "../components/Navigation.js"
 
 const { a, p, h1, div, pre } = tags

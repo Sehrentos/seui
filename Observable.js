@@ -14,9 +14,11 @@ export default class Observable {
 	/**
 	 * Add an observer to the list of observers.
 	 * @param {(newValue: any, oldValue: any)=>void} observer The function to be called when the observable's value changes.
+	 * @returns {(newValue: any, oldValue: any)=>void} The observer function that was passed as argument.
 	 */
 	subscribe(observer) {
 		this.observers.push(observer);
+		return observer;
 	}
 
 	/**

@@ -1,10 +1,10 @@
-import { tags, fragment } from "../../seui.js"
+import { tags } from "../../SeUI.js"
 import SampleTimer from "../components/SampleTimer.js"
 import SampleDialog from "../components/SampleDialog.js"
 import SVGWorld from "../components/SVGWorld.js"
 import Navigation from "../components/Navigation.js"
 
-const { a, b, p, h1 } = tags
+const { a, b, p, h1, fragment } = tags
 
 export default function Home() {
 	return fragment(
@@ -13,6 +13,7 @@ export default function Home() {
 			a({ href: "#!/" }, "Home"),
 			a({ href: "#!/info" }, "Info"),
 			a({ href: "#!/contact" }, "Contact"),
+			a({ href: "#!/pubsub" }, "PubSub"),
 			a({ href: `#!/error/${encodeURIComponent("Error: Sample message.")}` }, "Error (sample)"),
 			a({ href: "#!/event-driven-observer" }, "Event Driven Observer"),
 			a({ href: "#!/observer-pattern" }, "Observer Pattern"),

@@ -1,4 +1,4 @@
-import Observable from "./Observable.js";
+import Observable from "../../Observable.js";
 
 const myName = new Observable('Toby');
 // accessing the getter
