@@ -7,7 +7,7 @@ const Input = (labelText, props = {}) => {
 	const inputProps = { id: "input-a", name: "input-a", type: "text", placeholder: "...", ...props }
 	return fieldset(
 		legend(
-			label({ for: inputProps.id }, labelText),
+			label({ htmlFor: inputProps.id }, labelText),
 		),
 		input(inputProps),
 	)
@@ -17,7 +17,7 @@ const TextArea = (labelText, props = {}) => {
 	const inputProps = { id: "input-a", name: "input-a", placeholder: "...", ...props }
 	return fieldset(
 		legend(
-			label({ for: inputProps.id }, labelText),
+			label({ htmlFor: inputProps.id }, labelText),
 		),
 		textarea(inputProps),
 	)
