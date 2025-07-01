@@ -17,20 +17,20 @@ over the DOM, leveraging modern browser APIs.
 -----------------
 
 - [seui - Simple, Expressive UI Utilities](#seui---simple-expressive-ui-utilities)
-	- [Table of Contents](#table-of-contents)
-	- [Key Features](#key-features)
-	- [Installation](#installation)
-	- [Usage Examples](#usage-examples)
-		- [1. Declarative HTML with `tags`](#1-declarative-html-with-tags)
-		- [2. Namespaced Tags (e.g., SVG)](#2-namespaced-tags-eg-svg)
-		- [3. Client-Side Routing with router](#3-client-side-routing-with-router)
-		- [4. Reactive State with Observable](#4-reactive-state-with-observable)
-		- [5. Deep Reactive State with State](#5-deep-reactive-state-with-state)
-		- [6. Custom lifecycle Events](#6-custom-lifecycle-events)
-		- [7. Sample App](#7-sample-app)
-	- [Documentation](#documentation)
-	- [Contributing](#contributing)
-	- [License](#license)
+  - [Table of Contents](#table-of-contents)
+  - [Key Features](#key-features)
+  - [Installation](#installation)
+  - [Usage Examples](#usage-examples)
+    - [1. Declarative HTML with `tags`](#1-declarative-html-with-tags)
+    - [2. Namespaced Tags (e.g., SVG)](#2-namespaced-tags-eg-svg)
+    - [3. Client-Side Routing with router](#3-client-side-routing-with-router)
+    - [4. Reactive State with Observable](#4-reactive-state-with-observable)
+    - [5. Deep Reactive State with State](#5-deep-reactive-state-with-state)
+    - [6. Custom lifecycle Events](#6-custom-lifecycle-events)
+    - [7. Sample App](#7-sample-app)
+  - [Documentation](#documentation)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Key Features
 - Declarative HTML with Tags:
@@ -69,16 +69,14 @@ const { h1, div, button, fragment } = tags
 
 const App = () => {
   return fragment(
-	div({ className: 'header' },
-		h1("Sample app"),
-	),
+    div({ className: 'header' },
+      h1("Sample app"),
+    ),
     button("Click Me", {
-		id: 'myButton',
-		onclick: () => alert('Button clicked!'),
-		style: {
-			backgroundColor: 'lightblue'
-		}
-	})
+      id: 'myButton',
+      onclick: () => alert('Button clicked!'),
+      style: 'backgroundColor:lightblue',
+    })
   )
 }
 
@@ -98,30 +96,30 @@ import { ns } from "../../seui.js"
  * svg world icon
  */
 export default function SVGWorld() {
-	return ns("http://www.w3.org/2000/svg", "svg", {
-		oncreate: (svg) => { // demonstrate custom oncreate function
-			svg.classList.add("anim-spin") // optional. animate
-			svg.setAttribute("aria-hidden", "true")
-			svg.setAttribute('viewbox', '0 0 24 24')
-			svg.setAttribute("width", "24px")
-			svg.setAttribute("height", "24px")
-			//svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
-			svg.append(
-				ns("http://www.w3.org/2000/svg", "path", {
-					oncreate: (path) => {
-						path.setAttribute("d", "M0 0h24v24H0z")
-						path.setAttribute("fill", "none")
-					}
-				}),
-				ns("http://www.w3.org/2000/svg", "path", {
-					oncreate: (path) => {
-						path.setAttribute("d", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
-						path.setAttribute("fill", "#2962ff")
-					}
-				})
-			)
-		}
-	})
+  return ns("http://www.w3.org/2000/svg", "svg", {
+    oncreate: (svg) => { // demonstrate custom oncreate function
+      svg.classList.add("anim-spin") // optional. animate
+      svg.setAttribute("aria-hidden", "true")
+      svg.setAttribute('viewbox', '0 0 24 24')
+      svg.setAttribute("width", "24px")
+      svg.setAttribute("height", "24px")
+      //svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
+      svg.append(
+        ns("http://www.w3.org/2000/svg", "path", {
+          oncreate: (path) => {
+            path.setAttribute("d", "M0 0h24v24H0z")
+            path.setAttribute("fill", "none")
+          }
+        }),
+        ns("http://www.w3.org/2000/svg", "path", {
+          oncreate: (path) => {
+            path.setAttribute("d", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
+            path.setAttribute("fill", "#2962ff")
+          }
+        })
+      )
+    }
+  })
 }
 ```
 
@@ -137,16 +135,16 @@ const appRoot = document.getElementById('app-root'); // Your main application co
 // Dummy page components (in a real app, these would be more complex)
 const Navigation = () => tags.nav(a({ href: "#!/" }, "Home"), a({ href: "#!/about" }, "About"))
 const HomePage = () => tags.div(
-	Navigation(),
-	tags.h1('Welcome Home!'),
-	tags.p('This is the homepage.'),
-	tags.button({ onclick: () => router.go('#!/about') }, 'Go to About')
+  Navigation(),
+  tags.h1('Welcome Home!'),
+  tags.p('This is the homepage.'),
+  tags.button({ onclick: () => router.go('#!/about') }, 'Go to About')
 );
 const AboutPage = () => tags.div(
-	Navigation(),
-	tags.h1('About Us'),
-	tags.p('Learn more about seui.'),
-	tags.button({ onclick: () => router.go('#!/user/123') }, 'Show profile: 123')
+  Navigation(),
+  tags.h1('About Us'),
+  tags.p('Learn more about seui.'),
+  tags.button({ onclick: () => router.go('#!/user/123') }, 'Show profile: 123')
 );
 const UserProfilePage = (userId) => tags.div(tags.h1(`User Profile for ID: ${userId}`));
 
@@ -258,9 +256,7 @@ Custom lifecycle events or methods used by the library.
 `"oncreate"` - This custom method will be invoked after element is created, but before it is added to the DOM.
 ```javascript
 span({ // oncreate function is passed to tags properties
-	oncreate: (el) => {
-		console.log("oncreate", el)
-	}
+  oncreate: (el) => console.log("oncreate", el)
 }, "a span")
 ```
 
@@ -277,77 +273,77 @@ const { a, b, p, h1, nav, form, span, textarea, button, input, fragment } = tags
 const counter = new Observable(0)
 
 function Home() {
-	// or use the local state
-	// const counter = new Observable(0)
-	const counterSpan = span(counter.value.toString())
-	const counterObserver = counter.subscribe(newValue => counterSpan.textContent = newValue.toString())
+  // or use the local state
+  // const counter = new Observable(0)
+  const counterSpan = span(counter.value.toString())
+  const counterObserver = counter.subscribe(newValue => counterSpan.textContent = newValue.toString())
 
-	// cleanup routine on route change
-	onceNavigate((e) => {
-		console.log(`cleanup from: ${e.oldURL} to: ${e.newURL}`)
-		counter.unsubscribe(counterObserver)
-	})
+  // cleanup routine on route change
+  onceNavigate((e) => {
+    console.log(`cleanup from: ${e.oldURL} to: ${e.newURL}`)
+    counter.unsubscribe(counterObserver)
+  })
 
-	return fragment( // with fragment you can combine multiple elements without rendering extra div
-		h1("Home page"),
-		nav(
-			a({ href: "#!/" }, "Home"),
-			" | ",
-			a({ href: "#!/contact" }, "Contact"),
-		),
-		p("This is a paragraph, ", b("Some Bold Red Text!", { style: { color: "red" } })),
-		p("Counter: ", counterSpan),
-		button("Increment", {
-			onclick: () => counter.update(c => c + 1)
-		}),
-	)
+  return fragment( // with fragment you can combine multiple elements without rendering extra div
+    h1("Home page"),
+    nav(
+      a({ href: "#!/" }, "Home"),
+      " | ",
+      a({ href: "#!/contact" }, "Contact"),
+    ),
+    p("This is a paragraph, ", b("Some Bold Red Text!", { style: { color: "red" } })),
+    p("Counter: ", counterSpan),
+    button("Increment", {
+     onclick: () => counter.update(c => c + 1)
+    }),
+  )
 }
 
 // can be extracted to ./components/ContactForm.js:
 const ContactForm = () => form(
-	{
-		id: "contact-form",
-		onsubmit: (e) => {
-			e.preventDefault()
-			const formData = new FormData(e.target)
-			const json = JSON.stringify(Object.fromEntries(formData))
-			alert(`TODO: demo send ${json}`)
-		}
-	},
-	input({ id: "name", name: "name", type: "text", placeholder: "Name...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
-	input({ id: "email", name: "email", type: "email", placeholder: "Email...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
-	textarea({ id: "message", name: "message", placeholder: "Message...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
-	input({ type: "submit", value: "Send" })
+  {
+    id: "contact-form",
+    onsubmit: (e) => {
+      e.preventDefault()
+      const formData = new FormData(e.target)
+      const json = JSON.stringify(Object.fromEntries(formData))
+      alert(`TODO: demo send ${json}`)
+    }
+  },
+  input({ id: "name", name: "name", type: "text", placeholder: "Name...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
+  input({ id: "email", name: "email", type: "email", placeholder: "Email...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
+  textarea({ id: "message", name: "message", placeholder: "Message...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
+  input({ type: "submit", value: "Send" })
 )
 
 function Contact() {
-	return fragment(
-		h1("Contact"),
-		nav(
-			a({ href: "#!/" }, "Home"),
-			" | ",
-			a({ href: "#!/contact" }, "Contact"),
-		),
-		p("Lorem ipsum dolor sit amet..."),
-		ContactForm(),
-	)
+  return fragment(
+    h1("Contact"),
+    nav(
+      a({ href: "#!/" }, "Home"),
+      " | ",
+      a({ href: "#!/contact" }, "Contact"),
+    ),
+    p("Lorem ipsum dolor sit amet..."),
+    ContactForm(),
+  )
 }
 
 // initialize the app using router
 // this will handle the routing based on the URL hash
 // and render the corresponding page
 router.init(document.body, "/", {
-	"/": Home, // also the default route
-	"/contact": Contact,
-	// sample error route
-	"#!/error/(.+)": (prev, now, $1) => { // custom error route
-		console.log(`Error route navigated from ${prev} to ${now} with ${$1}`)
-		document.body.replaceChildren(tags.div("Error! You have navigated to the error page."),
-		tags.pre(decodeURIComponent($1)))
-		return false // stop further processing
-	},
-	// optional. sample error page
-	// "#!/error/(.+)": ErrorPage,
+  "/": Home, // also the default route
+  "/contact": Contact,
+  // sample error route
+  "#!/error/(.+)": (prev, now, $1) => { // custom error route
+    console.log(`Error route navigated from ${prev} to ${now} with ${$1}`)
+    document.body.replaceChildren(tags.div("Error! You have navigated to the error page."),
+    tags.pre(decodeURIComponent($1)))
+    return false // stop further processing
+  },
+  // optional. sample error page
+  // "#!/error/(.+)": ErrorPage,
 })
 ```
 
