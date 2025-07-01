@@ -4,9 +4,9 @@ for building reactive and dynamic web user interfaces without the overhead
 of a full-blown framework. It focuses on composability and direct control
 over the DOM, leveraging modern browser APIs.
 
-See live demo page [here](https://sehrentos.github.io/seui/) hosted by the github pages.
-
-See sample App code in the [docs/index.js](docs/index.js) directory.
+1. See live demo page [here](https://sehrentos.github.io/seui/) hosted by the github pages.
+2. Explore the sample source code in the [docs/index.js](docs/index.js).
+3. Try the editable live version on [JSFiddle](https://jsfiddle.net/Sehrentos/bhamrxg9/).
 
 ---
 
