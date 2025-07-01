@@ -67,9 +67,7 @@ export function createElement(tag, children) {
 /**
  * create HTML tag with namespace URI and qualified name
  * @param {string} namespaceURI A string that specifies the `namespaceURI` to associate with the element.
- * @param {string} tag A string that specifies the type of element to be created.
- * @param {{is?:string, oncreate?:((element:Element)=>void)}} [options] An optional `ElementCreationOptions` object containing a single property named `is` and custom `oncreate` function
- * @returns {Element}
+ * @returns {TagsProxy} A function that creates an HTML element with the specified tag and namespace URI.
  * @example ns("http://www.w3.org/1999/xhtml", "div")
  * @example ns("http://www.w3.org/2000/svg", "svg", { oncreate: (svg) => {
  *   svg.setAttribute('style', 'border: 1px solid black')
@@ -78,19 +76,51 @@ export function createElement(tag, children) {
  *   svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
  * }})
  */
-export function ns(namespaceURI, tag, options) {
-	if (typeof tag !== "string") {
-		throw new TypeError("Property tag must be a string")
-	}
-	const el = document.createElementNS(
-		namespaceURI || "http://www.w3.org/1999/xhtml",
-		tag,
-		typeof options === "object" && typeof options.is === "string" ? options.is : null
-	)
-	if (typeof options === "object" && typeof options.oncreate === "function") {
-		options.oncreate(el)
-	}
-	return el
+export function ns(namespaceURI) {
+	return new Proxy({}, {
+		get(target, prop, receiver) {
+			return (...children) => {
+				if (typeof prop !== "string") {
+					throw new TypeError("Property name must be a string")
+				}
+				const element = document.createElementNS(
+					namespaceURI, // e.g. "http://www.w3.org/1999/xhtml",
+					prop, // e.g. "div",
+					typeof children[0] === "object" && typeof children[0].is === "string" ? children[0].is : null
+				)
+				// Now, handle rest children
+				for (const child of children) {
+					if (child == null) {
+						continue;
+					}
+					if (typeof child === "string") {
+						// add string as text node
+						element.appendChild(document.createTextNode(child))
+					} else if (child instanceof String) {
+						// add String as text node
+						element.appendChild(document.createTextNode(child.toString()))
+					} else if (child instanceof Element || child instanceof DocumentFragment || (typeof child === "object" && typeof child.appendChild === "function")) {
+						// add as element
+						element.appendChild(child)
+					} else if (child.constructor === Object) {
+						// plain object
+						for (let key in child) {
+							// skip custom lifecycle method and NS is attribute
+							if (key === "oncreate" || key === "is") {
+								continue
+							}
+							element.setAttribute(key, String(child[key]));
+						}
+						// invoke the custom oncreate if it exists
+						if (typeof child.oncreate === "function") {
+							child.oncreate(element)
+						}
+					}
+				}
+				return element
+			}
+		}
+	})
 }
 
 /**
