@@ -54,7 +54,7 @@ For now, you can directly import them into your project:
 ```
 ```javascript
 // In your main JavaScript file (e.g., app.js)
-import { tags, namespaces, router, watch, Observable } from './seui.js';
+import { tags, router, State, Observable } from './seui.js';
 ```
 
 ## Usage Examples
