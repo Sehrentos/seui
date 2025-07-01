@@ -1,8 +1,6 @@
-import { tags } from "../../seui.js"
-import Observable from "../../Observable.js"
+import { tags, Observable, onceNavigate } from "../../seui.js"
 import Navigation from "../components/Navigation.js"
 import { globalState } from "../state.js"
-import { onceNavigate } from "../../Router.js"
 
 const { a, p, h1, div, span, button } = tags
 
@@ -14,7 +12,9 @@ export default function PubSub() {
 
 	// use the global state
 	const globalCounterSpan = span(globalState.value.clicks.toString())
-	const globalObserver = globalState.subscribe(newValue => globalCounterSpan.textContent = newValue.clicks.toString())
+	const globalObserver = globalState.subscribe(newValue =>
+		globalCounterSpan.textContent = newValue.clicks.toString()
+	)
 
 	// cleanup routine on route change
 	// this will trigger when the user navigates to another page

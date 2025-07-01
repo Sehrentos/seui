@@ -14,6 +14,7 @@ export default function Home() {
 			a({ href: "#!/info" }, "Info"),
 			a({ href: "#!/contact" }, "Contact"),
 			a({ href: "#!/pubsub" }, "PubSub"),
+			a({ href: "#!/state-test" }, "State Test"),
 			a({ href: `#!/error/${encodeURIComponent("Error: Sample message.")}` }, "Error (sample)"),
 			a({ href: "#!/event-driven-observer" }, "Event Driven Observer"),
 			a({ href: "#!/observer-pattern" }, "Observer Pattern"),

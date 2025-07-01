@@ -1,4 +1,4 @@
-import Observable from "../../Observable.js";
+import Observable from "./Observable.js";
 
 const myName = new Observable('Toby');
 // accessing the getter
@@ -26,7 +26,7 @@ selectedFolder.subscribe(updateEmailListPane);
 
 
 // a click on a folder updates the observable
-selectedFolder.update(1);
+selectedFolder.update('1');
 
 
 const myTodo = new Observable({
