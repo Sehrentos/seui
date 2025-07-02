@@ -6,9 +6,11 @@ export default function SampleDialog(props = {}) {
 	return dialog(
 		{
 			onclick: (e) => {
-				// closing the dialog
-				if (e.currentTarget.close) e.currentTarget.close()
-				e.currentTarget.removeAttribute("open")
+				/** @type {HTMLDialogElement} */
+				// @ts-ignore
+				const _dialog = e.currentTarget
+				if (_dialog.close) _dialog.close()
+				_dialog.removeAttribute("open")
 			},
 			...props
 		},

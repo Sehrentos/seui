@@ -31,7 +31,7 @@ export default function StateTest() {
 
 	// 5. Subscribe to ANY change in user state
 	const unsubscribeUserAllChanges = counter.user.subscribe((obj, key, oldValue, newValue) => {
-		console.log(`[ANY CHANGE] Key: '${String(key)}' changed from '${oldValue}' to '${newValue}' in:`, obj);
+		console.log(`[ANY USER CHANGE] Key: '${String(key)}' changed from '${oldValue}' to '${newValue}' in:`, obj);
 		counterSpan.textContent = JSON.stringify(counter)
 	});
 

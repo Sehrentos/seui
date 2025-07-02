@@ -8,6 +8,20 @@ const { a, b, p, h1, fragment } = tags
 
 export default function Home() {
 	return fragment(
+		{ // sample lifecycle events
+			oncreate: (e) => {
+				// lifecycle event when the element is created
+				console.log("Home lifecycle:", e.type)
+			},
+			onmount: (e) => {
+				// lifecycle event when the element is mounted
+				console.log("Home lifecycle:", e.type)
+			},
+			onunmount: (e) => {
+				// lifecycle event when the element is unmounted
+				console.log("Home lifecycle:", e.type)
+			},
+		},
 		h1("Demo of the SEUI library"),
 		Navigation(
 			a({ href: "#!/" }, "Home"),
@@ -46,7 +60,7 @@ export default function Home() {
 		SampleDialog({
 			id: "home-dialog",
 			//open: "open", // UI open at startup
-			oncreate: (el) => {
+			oncreate: (e) => {
 				console.log("SampleDialog::oncreate")
 			}
 		})

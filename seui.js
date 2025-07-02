@@ -1,6 +1,15 @@
 /**
- * @typedef {{[key:string]:(...args:any[])=>HTMLElement}} TagsProxy a proxy object for HTML tags
+ * @typedef {{[key:string]:(...props: UIProps)=>HTMLElement}} TagsProxy a proxy object for HTML tags
+ * @typedef {Array<string|number|boolean|bigint|Node|Element|HTMLElement|LifecycleMethods|UIAttributes>} UIProps
+ * @typedef {{[key:string]:any}} UIAttributes
+ * @typedef {(e:CustomEvent & { target: HTMLElement&{ _listeners: {key:string,handler:()=>any}[] } })=>any} LifecycleCallback
+ * @typedef {Object} LifecycleMethods
+ * @prop {LifecycleCallback} oncreate a callback to be invoked when the element is created
+ * @prop {LifecycleCallback} onmount a callback to be invoked when the element is mounted
+ * @prop {LifecycleCallback} onunmount a callback to be invoked when the element is unmounted
  */
+
+const LIFECYCLES = ["oncreate", "onmount", "onunmount"]
 
 /**
  * create a proxy object for HTML tags creation
@@ -21,21 +30,37 @@ export const tags = new Proxy({}, {
 			if (typeof prop !== "string") {
 				throw new TypeError("Property name must be a string")
 			}
-			return createElement(prop, children)
+			return createElement(null, prop, children)
 		}
 	}
 })
 
 /**
  * Create an HTML element with the specified tag and append children to it.
+ * @param {string|null} namespace - The namespace URI of the element to be created.
  * @param {string} tag - The type of element to be created.
- * @param {Array<any>} children - The children to append to the created element.
- * @returns {HTMLElement|DocumentFragment} The created element with appended children.
+ * @param {Array<any>} children - The children to append to the created element or properties.
+ * @returns {Element|HTMLElement|DocumentFragment} The created element with appended children.
  * @throws {TypeError} If the tag is not a string.
  */
-export function createElement(tag, children) {
-	// const container = document.createDocumentFragment()
-	const el = tag === "fragment" ? document.createDocumentFragment() : document.createElement(tag)
+export function createElement(namespace, tag, children) {
+	let element
+	// find object with "is" attribute
+	let elementCreateOptions = children.find(p => typeof p === "object" && p.constructor === Object && typeof p.is === "string")
+
+	// create element
+	if (namespace) {
+		element = document.createElementNS(
+			namespace, // e.g. "http://www.w3.org/1999/xhtml",
+			tag, // e.g. "div",
+			elementCreateOptions
+		)
+	} else if (tag === "fragment") {
+		element = document.createDocumentFragment()
+	} else {
+		element = document.createElement(tag, elementCreateOptions)
+	}
+
 	// Process children or properties of an element.
 	// Invoke custom `oncreate` function if provided, that is invoked before element is added into DOM.
 	for (const child of children) {
@@ -44,37 +69,39 @@ export function createElement(tag, children) {
 		}
 		if (typeof child === "string") {
 			// add string as text node
-			el.appendChild(document.createTextNode(child))
-		} else if (child instanceof String) {
-			// add String as text node
-			el.appendChild(document.createTextNode(child.toString()))
-		} else if (child instanceof Element || child instanceof DocumentFragment || (typeof child === "object" && typeof child.appendChild === "function")) {
+			element.appendChild(document.createTextNode(child))
+		} else if (child instanceof String || typeof child === "number"
+			|| typeof child === "boolean" || typeof child === "bigint") {
+			// add as text node
+			element.appendChild(document.createTextNode(String(child)))
+		} else if (child instanceof Element || child instanceof DocumentFragment
+			|| (typeof child === "object" && typeof child.appendChild === "function")) {
 			// add as element
-			el.appendChild(child)
+			element.appendChild(child)
 		} else if (child.constructor === Object) {
 			// merge plain objects
-			merge(el, child)
-			// invoke the custom oncreate if it exists
-			if (typeof child.oncreate === "function") {
-				child.oncreate(el)
-			}
+			merge(element, child, !!namespace)
 		}
 	}
-	// return container.appendChild(el)
-	return el
+
+	// dispatch oncreate lifecycle event
+	element.dispatchEvent(new CustomEvent('create', {
+		bubbles: true,
+		cancelable: true,
+	}))
+
+	return element
 }
 
 /**
  * create HTML tag with namespace URI and qualified name
  * @param {string} namespaceURI A string that specifies the `namespaceURI` to associate with the element.
  * @returns {TagsProxy} A function that creates an HTML element with the specified tag and namespace URI.
- * @example ns("http://www.w3.org/1999/xhtml", "div")
- * @example ns("http://www.w3.org/2000/svg", "svg", { oncreate: (svg) => {
- *   svg.setAttribute('style', 'border: 1px solid black')
- *   svg.setAttribute("width", "100px")
- *   svg.setAttribute("height", "100px")
- *   svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
- * }})
+ * @example
+ * const { div } = ns("http://www.w3.org/1999/xhtml")
+ * @example
+ * const { svg, path } = ns("http://www.w3.org/2000/svg")
+ * const MyComponent = () => svg({ width: 100, height: 100 }, path({ d: "M0 0 L100 0 L100 100 L0 100 Z" }))
  */
 export function ns(namespaceURI) {
 	return new Proxy({}, {
@@ -83,41 +110,7 @@ export function ns(namespaceURI) {
 				if (typeof prop !== "string") {
 					throw new TypeError("Property name must be a string")
 				}
-				const element = document.createElementNS(
-					namespaceURI, // e.g. "http://www.w3.org/1999/xhtml",
-					prop, // e.g. "div",
-					typeof children[0] === "object" && typeof children[0].is === "string" ? children[0].is : null
-				)
-				// Now, handle rest children
-				for (const child of children) {
-					if (child == null) {
-						continue;
-					}
-					if (typeof child === "string") {
-						// add string as text node
-						element.appendChild(document.createTextNode(child))
-					} else if (child instanceof String) {
-						// add String as text node
-						element.appendChild(document.createTextNode(child.toString()))
-					} else if (child instanceof Element || child instanceof DocumentFragment || (typeof child === "object" && typeof child.appendChild === "function")) {
-						// add as element
-						element.appendChild(child)
-					} else if (child.constructor === Object) {
-						// plain object
-						for (let key in child) {
-							// skip custom lifecycle method and NS is attribute
-							if (key === "oncreate" || key === "is") {
-								continue
-							}
-							element.setAttribute(key, String(child[key]));
-						}
-						// invoke the custom oncreate if it exists
-						if (typeof child.oncreate === "function") {
-							child.oncreate(element)
-						}
-					}
-				}
-				return element
+				return createElement(namespaceURI, prop, children)
 			}
 		}
 	})
@@ -128,17 +121,110 @@ export function ns(namespaceURI) {
  * @returns {Object} merged object
  * @example merge({ a: 1 }, { b: 2 })
  */
-function merge(target, props) {
+function merge(target, props, forceAttribute = false) {
 	for (const prop in props) {
 		if (props.hasOwnProperty(prop)) {
 			if (props[prop].constructor === Object) {
-				merge(target[prop], props[prop]) // next-level
+				// next-level object
+				merge(target[prop], props[prop])
+				continue
+			}
+			// element
+			if (target instanceof Element
+				|| target instanceof DocumentFragment
+				|| (typeof target === "object" && typeof target.appendChild === "function")) {
+				// custom lifecycle handling for events
+				if (prop.indexOf("on") === 0 || LIFECYCLES.includes(prop)) {
+					// add event listener
+					addEventListener(target, prop.slice(2), props[prop])
+					continue
+				}
+			}
+			// attribute
+			if (forceAttribute && typeof target.setAttribute === "function") {
+				// force attribute assignment e.g. SVG element width/height
+				target.setAttribute(prop, props[prop])
+				// TODO setAttributeNS support with array of 3 parameters?
+				// svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
+			} else if (prop in target && prop !== 'style' && !prop.startsWith('data-')) {
+				// Common properties: direct assignment
+				target[prop] = props[prop]
+			} else if (typeof target.setAttribute === "function") {
+				// fallback for other attributes or style attribute
+				target.setAttribute(prop, props[prop])
 			} else {
+				// fallback to common properties
 				target[prop] = props[prop]
 			}
 		}
 	}
 	return target
+}
+
+/**
+ * Adds an event listener to an element and stores it in the element's
+ * internal `_listeners` array.
+ * @param {Element} element
+ * @param {string} key
+ * @param {function} handler
+ */
+function addEventListener(element, key, handler) {
+	if (element['_listeners'] === undefined) {
+		element['_listeners'] = []
+	}
+	element['_listeners'].push({ key, handler })
+	// @ts-ignore string is valid key
+	element.addEventListener(key, handler)
+}
+
+/**
+ * Removes an event listener from an element and removes it from the element's
+ * internal `_listeners` array.
+ * @param {Element} element
+ * @param {string} key
+ * @param {function} handler
+ */
+function removeEventListener(element, key, handler) {
+	if (element['_listeners'] == null) {
+		return
+	}
+	for (let i = 0; i < element['_listeners'].length; i++) {
+		const listener = element['_listeners'][i]
+		if (listener.key === key && listener.handler === handler) {
+			element['_listeners'].splice(i, 1)
+			// @ts-ignore string is valid key
+			element.removeEventListener(key, handler)
+			return
+		}
+	}
+}
+
+/**
+ * Recursively removes all event listeners from an element and its child elements.
+ *
+ * This function traverses through the DOM tree starting from the given element,
+ * and removes all event listeners stored in the element's `_listeners` property.
+ * It first processes all child elements, ensuring that every descendant element
+ * is also cleared of its event listeners.
+ *
+ * @param {HTMLElement|Element} element - The DOM element from which to remove event listeners.
+ */
+function removeEventListeners(element) {
+	if (element == null) {
+		return
+	}
+	if (element.children.length > 0) {
+		for (const child of element.children) {
+			removeEventListeners(child)
+		}
+	}
+	if (element['_listeners'] != null) {
+		for (const listener of element['_listeners']) {
+			element.removeEventListener(listener.key, listener.handler)
+			// console.log("Removed listener:", listener)
+		}
+		element['_listeners'] = null
+	}
 }
 
 // #region Router
@@ -161,8 +247,17 @@ export class Router {
 		this.defaultRoute = ""
 		/** @type {TRoute} */
 		this.routes = {}
-		/** @type {string} */
-		this.lastURL = ""
+		/**
+		 * The observable state of the router.
+		 * @type {Observable<{ newURL: string, oldURL: string }>}
+		 * @example
+		 * const unsubscribe = router.state.subscribe(({ newURL, oldURL }) => {
+		 *   console.log(`Route change from: ${oldURL} to: ${newURL}`)
+		 *   unsubscribe()
+		 * })
+		 * router.state.update({ newURL: '', oldURL: '' })
+		 */
+		this.state = new Observable({ newURL: "", oldURL: "" })
 	}
 
 	/**
@@ -195,26 +290,42 @@ export class Router {
 	init(root, defaultRoute, routes) {
 		this.root = root
 		this.defaultRoute = defaultRoute
-		this.routes = { ...routes, ...routes }
-		this.lastURL = document.URL // set initial URL eg. "http://localhost/"
+		this.routes = routes
+		this.state.value.oldURL = "" // document.URL set initial URL eg. "http://localhost/"
+		this.state.value.newURL = ""
 		// make sure window event is binded only once
 		if (typeof this._onHashChange !== "function") {
-			this._onHashChange = this.update.bind(this)
+			this._onHashChange = this.onHashChange.bind(this)
 			window.addEventListener('hashchange', this._onHashChange, false)
 		}
 		// initial update
-		this.update()
+		this.update(document.URL, this.state.value.oldURL)
+	}
+
+	/**
+	 * Handles the hashchange event, triggered when the URL hash changes.
+	 * This method is intended to manage navigation state changes due to user
+	 * interactions or programmatic hash updates.
+	 *
+	 * @param {HashChangeEvent} e - The event object containing details about
+	 * the hashchange, including the `e.oldURL` and `e.newURL` properties.
+	 */
+	onHashChange(e) {
+		this.update(
+			e.newURL, // || document.URL,
+			e.oldURL, // || this.state.value.oldURL || document.URL
+		)
 	}
 
 	/**
 	 * Update the router state based on the current URL.
 	 * Calls the appropriate route callback and updates the UI accordingly.
-	 * Calls custom `ondestroy` method on the previous route.
+	 *
+	 * @param {string} [newURL] - optional. The new URL hash.
+	 * @param {string} [oldURL] - optional. The old URL hash.
 	 * @returns {Promise<void>} A promise that resolves when the route update is complete.
 	 */
-	async update() {
-		const prevUrl = String(this.lastURL);
-		const nextUrl = (this.lastURL = document.URL);
+	async update(newURL, oldURL) {
 		const root = this.root;
 		const defaultRoute = this.defaultRoute;
 		const routes = this.routes;
@@ -229,9 +340,7 @@ export class Router {
 			for (const key in routes) {
 				if (key.indexOf("#!/") !== 0 && location.hash === "#!" + key) {
 					routeCallback = routes[key];
-					routeCallbackPromise = () => Promise.resolve(
-						routeCallback(prevUrl, nextUrl)
-					);
+					routeCallbackPromise = Promise.resolve(routeCallback(oldURL, newURL));
 					matchedRouteKey = key;
 					routeMatched = true;
 					break;
@@ -244,54 +353,67 @@ export class Router {
 					if (key.indexOf("#!/") === 0) { // Only consider keys starting with #!/ for RegExp
 						const regExp = new RegExp(key);
 						const match = document.URL.match(regExp);
-						if (match) {
-							routeCallback = routes[key];
-							// If the callback needs regex groups, pass them.
-							routeCallbackPromise = () => Promise.resolve(
-								routeCallback(prevUrl, nextUrl, ...match.slice(1))
-							);
-							matchedRouteKey = key;
-							routeMatched = true;
-							break;
+						if (!match) {
+							continue
 						}
+						routeCallback = routes[key];
+						// If the callback needs regex groups, pass them.
+						routeCallbackPromise = Promise.resolve(routeCallback(oldURL, newURL, ...match.slice(1)));
+						matchedRouteKey = key;
+						routeMatched = true;
+						break;
 					}
 				}
 			}
 
 			// Handle the matched route or fallback to default/error
 			if (routeMatched && routeCallback) {
-				// Handle previous route's cleanup if component was rendered
-				// This assumes `routeCallbackResult` holds the component's root element
-				// and that component has a `cleanup` method.
-				// You would need to store the previous component instance and its cleanup method.
-				// Let's add a place to store the active component's cleanup
-				if (this._activeComponentCleanup && typeof this._activeComponentCleanup === 'function') {
-					this._activeComponentCleanup();
-					this._activeComponentCleanup = null; // Clear reference
+				// #region lifecycle before render
+				if (this._activeComponent) {
+					// dispatch lifecycle event onunmount
+					this._activeComponent.dispatchEvent(new CustomEvent('unmount', {
+						bubbles: true,
+						cancelable: true,
+					}));
+					// @ts-ignore remove lifecycle events associated with the component
+					// queueMicrotask(() => removeEventListeners(this._activeComponent));
+					queueMicrotask(() => removeEventListeners(root));
+					// removeEventListeners(root)
 				}
+				// #endregion lifecycle before render
 
-				const routeCallbackResult = await routeCallbackPromise();
+				// wait for the route callback
+				const routeCallbackResult = await routeCallbackPromise;
 
+				// Handle rendering of the new route
+				// when routeCallbackResult is a Node
 				if (routeCallbackResult instanceof Node) {
+					// render
 					root.replaceChildren(routeCallbackResult);
-					// If the component returned an element AND has a cleanup method attached to it:
-					// @ts-ignore custom lifecycle method
-					if (typeof routeCallbackResult.cleanup === 'function') {
-						// @ts-ignore
-						this._activeComponentCleanup = routeCallbackResult.cleanup;
-					}
-					return;
+
+					// #region lifecycle after render
+					// store the current component instance for later use
+					this._activeComponent = routeCallbackResult;
+
+					// dispatch lifecycle event onmount
+					routeCallbackResult.dispatchEvent(new CustomEvent('mount', {
+						bubbles: true,
+						cancelable: true,
+					}));
+					// #endregion lifecycle after render
 				}
-				// optional. other types of routeCallbackResult
-				// if (routeCallbackResult === false) {
-				// 	return;
-				// }
-			} else {
-				// No route matched
-				if (window.location.hash !== defaultRoute) {
-					window.location.hash = defaultRoute.indexOf("#!/") === 0 ? defaultRoute : "#!" + defaultRoute;
-				}
+
+				// signal route update
+				this.state.update({ newURL, oldURL });
+
+				return;
 			}
+
+			// If no route matched, navigate to default route
+			if (window.location.hash !== defaultRoute) {
+				window.location.hash = defaultRoute.indexOf("#!/") === 0 ? defaultRoute : "#!" + defaultRoute;
+			}
+
 		} catch (e) {
 			console.error("Router error:", e);
 			window.location.hash = `#!/error/${encodeURIComponent(e.message)}`;
@@ -329,7 +451,8 @@ export class Router {
 		this.root = undefined
 		this.defaultRoute = ""
 		this.routes = {}
-		this.lastURL = ""
+		this.state.unsubscribeAll()
+		this.state.update({ newURL: "", oldURL: "" })
 		if (typeof this._onHashChange === "function") {
 			window.removeEventListener('hashchange', this._onHashChange, false)
 			this._onHashChange = undefined
@@ -338,27 +461,7 @@ export class Router {
 }
 
 /**
- * The single instance of the application router.
- * Use this object to set up routes and navigate.
- * @type {Router}
- * @example
- * // In your main app module:
- * import { router } from './seui.js'; // or wherever you export it
- * import Home from './pages/Home.js';
- * import Info from './pages/Info.js';
- *
- * router.init(document.body, "/", {
- * "/": Home,
- * "/info": () => Info(),
- * });
- *
- * // To navigate:
- * router.go("#!/info");
- */
-export const router = new Router()
-
-/**
- * Helper method to listen for a single navigation event
+ * Helper method to listen for a single `'hashchange'` event
  * and then remove the event listener.
  *
  * @param {(e: HashChangeEvent)=>void} callback The function to be called when the navigation event occurs.
@@ -567,7 +670,7 @@ export function State(target, isAsync = false) {
 // #region Observable
 /**
  * Callback function invoked when an observable's value changes.
- * @typedef {(newValue: T, oldValue: T) => void} ObserverCallback
+ * @typedef {(newValue: T, oldValue: T, observer: ObserverCallback<T>) => void} ObserverCallback
  * @template T The type of the Observable's value for this specific callback instance.
  */
 
@@ -590,11 +693,25 @@ export class Observable {
 	/**
 	 * Add an observer to the list of observers.
 	 * @param {ObserverCallback<T>} observer The function to be called when the observable's value changes.
-	 * @returns {ObserverCallback<T>} The observer function that was added.
+	 * @returns {UnsubscribeFunction} A function to unsubscribe the observer from the list of observers.
+	 * @example
+	 * const observable = new Observable(0);
+	 * const observer = (newValue, oldValue) => console.log("Observable value changed from", oldValue, "to", newValue);
+	 * const unsubscribe = observable.subscribe(observer); // subscribes the observer and returns an unsubscribe function
+	 * unsubscribe(); // unsubscribes the observer
+	 * @example
+	 * const observable = new Observable(0);
+	 * const unsubscribe = observable.subscribe(function observerCallback(newValue, oldValue, observer) {
+	 * 	console.log("Observable value changed from", oldValue, "to", newValue);
+	 *  // unsubscribe from the observable:
+	 *  unsubscribe();
+	 *  observable.unsubscribe(observer); // or this
+	 *  observable.unsubscribe(observerCallback); // or this
+	 * })
 	 */
 	subscribe(observer) {
 		this.observers.push(observer);
-		return observer;
+		return () => this.unsubscribe(observer);
 	}
 
 	/**
@@ -604,6 +721,14 @@ export class Observable {
 	 */
 	unsubscribe(observer) {
 		this.observers = this.observers.filter((obs) => obs !== observer);
+	}
+
+	/**
+	 * Remove all observers from the list of observers.
+	 * @returns {void}
+	 */
+	unsubscribeAll() {
+		this.observers = [];
 	}
 
 	/**
@@ -621,7 +746,7 @@ export class Observable {
 		} else {
 			this._value = updater;
 		}
-		this.observers.forEach((observer) => observer(this._value, oldValue));
+		this.observers.forEach((observer) => observer(this._value, oldValue, observer));
 	}
 
 	/**
@@ -633,14 +758,32 @@ export class Observable {
 	}
 
 	/**
-	 * Sets the value of the Observable.
-	 * Any registered observers are called with the new and old value after the update.
+	 * Sets the value of the Observable without notifying observers.
 	 * @param {T} value The new value to set.
 	 * @returns {void}
 	 */
 	set value(value) {
 		this._value = value;
-		this.update();
 	}
 }
 // #endregion Observable
+
+/**
+ * The single instance of the application router.
+ * Use this object to set up routes and navigate.
+ * @type {Router}
+ * @example
+ * // In your main app module:
+ * import { router } from './seui.js'; // or wherever you export it
+ * import Home from './pages/Home.js';
+ * import Info from './pages/Info.js';
+ *
+ * router.init(document.body, "/", {
+ * "/": Home,
+ * "/info": () => Info(),
+ * });
+ *
+ * // To navigate:
+ * router.go("#!/info");
+ */
+export const router = new Router()

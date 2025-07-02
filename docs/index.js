@@ -32,6 +32,11 @@ console.time("init")
 // to remove the router listeners
 // router.remove()
 
+// subscribe to global router state changes
+// router.state.subscribe((newVal, oldVal) => {
+// 	console.table({ newState: newVal, oldState: oldVal })
+// })
+
 // setup the router
 router.init(document.body, "/", {
 	"/": Home, // also the default route

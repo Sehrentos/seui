@@ -14,7 +14,7 @@ export default function SVGWorld() {
 		height: "24px",
 		// oncreate: (e) => {
 		// 	console.log("oncreate", e)
-		// 	e.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
+		// 	e.target.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
 		// },
 	},
 		path({ d: "M0 0h24v24H0z", fill: "none" }),

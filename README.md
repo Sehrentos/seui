@@ -29,6 +29,7 @@ over the DOM, leveraging modern browser APIs.
     - [6. Custom lifecycle Events](#6-custom-lifecycle-events)
     - [7. Sample App](#7-sample-app)
   - [Documentation](#documentation)
+  - [Plans](#plans)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -244,10 +245,28 @@ appState.user.lastName = 'Jones'; // This listener does NOT fire anymore
 
 Custom lifecycle events or methods used by the library.
 
-`"oncreate"` - This custom method will be invoked after element is created, but before it is added to the DOM.
+`"oncreate"` - This event will be invoked after element is created, but before it is added to the DOM.
 ```javascript
-span({ // oncreate function is passed to tags properties
-  oncreate: (el) => console.log("oncreate", el)
+span({ // function is passed to tags properties
+  oncreate: (e) => console.log("component created")
+}, "a span")
+```
+
+> [!NOTE]
+> Events below are bound to the use of the `Router` class, since it will monitor the route changes.
+> These will not trigger when router is not in use.
+
+`"onmount"` - This event will be invoked after element is added to the DOM.
+```javascript
+span({ // function is passed to tags properties
+  onmount: (e) => console.log("component mounted")
+}, "a span")
+```
+
+`"onunmount"` - This event will be invoked when element is removed from the DOM.
+```javascript
+span({ // function is passed to tags properties
+  onunmount: (e) => console.log("component unmounted")
 }, "a span")
 ```
 
@@ -340,6 +359,12 @@ router.init(document.body, "/", {
 
 ## Documentation
 TODO: improve the documentation.
+
+## Plans
+1. Improve the Router
+2. Improve the lifecycles
+3. Improve the docs and samples
+4. Other improvements overall
 
 ## Contributing
 All contributions are welcome.

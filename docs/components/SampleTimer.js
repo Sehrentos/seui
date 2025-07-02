@@ -52,8 +52,8 @@ export default function SampleTimer(props = {}) {
 		...props
 	},
 		span({
-			oncreate: (el) => {
-				createTimer(el, 0, props.onTick)
+			oncreate: (e) => {
+				createTimer(e.target, 0, props.onTick)
 			}
 		})
 	)

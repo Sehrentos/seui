@@ -1,4 +1,4 @@
-import { tags, Observable, onceNavigate } from "../../seui.js"
+import { tags, router, Observable } from "../../seui.js"
 import Navigation from "../components/Navigation.js"
 import { globalState } from "../state.js"
 
@@ -8,20 +8,25 @@ export default function PubSub() {
 	// use the local state
 	const counter = new Observable(0)
 	const counterSpan = span(counter.value.toString())
-	const counterObserver = counter.subscribe(newValue => counterSpan.textContent = newValue.toString())
+	const unsubscribeCounter = counter.subscribe(newValue => counterSpan.textContent = newValue.toString())
 
 	// use the global state
 	const globalCounterSpan = span(globalState.value.clicks.toString())
-	const globalObserver = globalState.subscribe(newValue =>
+	const unsubscribeGlobal = globalState.subscribe(newValue =>
 		globalCounterSpan.textContent = newValue.clicks.toString()
 	)
 
-	// cleanup routine on route change
-	// this will trigger when the user navigates to another page
-	onceNavigate((e) => {
-		console.log(`PubSub::cleanup from: ${e.oldURL} to: ${e.newURL}`)
-		globalState.unsubscribe(globalObserver)
-		counter.unsubscribe(counterObserver)
+	// subscribe to the router state observable
+	// and unsubscribe when leaving the page
+	const unsubscribeRouter = router.state.subscribe(({ newURL, oldURL }) => {
+		console.log("Route change:", newURL, oldURL)
+		// cleanup listeners
+		if (oldURL.endsWith("#!/pubsub")) { // leaving the current page
+			console.log("PubSub::cleanup listeners")
+			unsubscribeGlobal()
+			unsubscribeCounter()
+			unsubscribeRouter()
+		}
 	})
 
 	return div(

@@ -28,6 +28,7 @@ const ContactForm = () => form(
 		id: "contact-form",
 		onsubmit: (e) => {
 			e.preventDefault()
+			// @ts-ignore
 			const formData = new FormData(e.target)
 			const json = JSON.stringify(Object.fromEntries(formData))
 			alert(`TODO: demo send ${json}`)
