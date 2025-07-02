@@ -275,10 +275,10 @@ fragment({ // function is passed to tags properties
 
 ### 7. Sample App
 
-Demonstrate the use of tags, routing, observable and navigation helper for cleanup.
+Demonstrate the use of tags, routing, observable state and unmount lifecycle event for unbind/unsubscribe.
 
 ```javascript
-import { tags, router, onceNavigate, Observable } from "./seui.js"
+import { tags, router, Observable } from "./seui.js"
 
 const { a, b, p, h1, nav, form, span, textarea, button, input, fragment } = tags
 
@@ -323,9 +323,9 @@ const ContactForm = () => form(
       alert(`TODO: demo send ${json}`)
     }
   },
-  input({ id: "name", name: "name", type: "text", placeholder: "Name...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
-  input({ id: "email", name: "email", type: "email", placeholder: "Email...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
-  textarea({ id: "message", name: "message", placeholder: "Message...", required: "required", oninput: (e) => console.log(e.type, e.target.value) }),
+  input({ id: "name", name: "name", type: "text", placeholder: "Name...", required: "required" }),
+  input({ id: "email", name: "email", type: "email", placeholder: "Email...", required: "required" }),
+  textarea({ id: "message", name: "message", placeholder: "Message...", required: "required" }),
   input({ type: "submit", value: "Send" })
 )
 
@@ -350,7 +350,7 @@ router.init(document.body, "/", {
   "/contact": Contact,
   // sample error route
   "#!/error/(.+)": (oldURL, newURL, message) => {
-    console.log(`Error route navigated from ${oldURL} to ${newURL} with ${message}`)
+    console.log(`RouteError from ${oldURL} to ${newURL} with ${message}`)
     return fragment(
       tags.div("Error! You have navigated to the error page."),
       tags.pre(decodeURIComponent(message))
