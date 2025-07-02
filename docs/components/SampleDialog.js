@@ -15,6 +15,7 @@ export default function SampleDialog(props = {}) {
 			...props
 		},
 		h1("Dialog title"),
-		p("Dialog paragraph..."),
+		p("This is a sample Dialog.."),
+		p("Click any where to close.")
 	)
 }

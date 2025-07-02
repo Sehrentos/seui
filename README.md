@@ -40,7 +40,7 @@ over the DOM, leveraging modern browser APIs.
 - Powerful Client-Side Router:
   - A single-instance hash-based router for managing application views.
   - Supports both exact string matches (e.g., `/path`) and flexible regular expression patterns (e.g., `#!/users/(\d+)`).
-  - Integrates with component lifecycle for automatic cleanup (**To-Do**) when routes change.
+  - Integrates with component lifecycle for automatic cleanup when routes change.
 - Reactive State Management (Observable):
   - A basic, traditional publish-subscribe pattern for managing single values or simple data streams. Ideal for granular reactivity where explicit updates are desired.
 - Deep Reactive State Management (State):
@@ -89,7 +89,7 @@ document.body.appendChild(App())
 Create SVG elements with proper namespaces.
 
 ```javascript
-import { ns } from "../../seui.js"
+import { ns } from "./seui.js"
 
 const { svg, path } = ns("http://www.w3.org/2000/svg")
 
@@ -104,10 +104,6 @@ export default function SVGWorld() {
       viewbox: "0 0 24 24",
       width: "24px",
       height: "24px",
-      // oncreate: (e) => {
-      // 	console.log("oncreate", e)
-      // 	e.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
-      // },
     },
     path({ d: "M0 0h24v24H0z", fill: "none" }),
     path({ d: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z", fill: "#2962ff" }),
@@ -122,36 +118,37 @@ Set up routes and navigate through your single-page application.
 ```javascript
 import { tags, router } from './seui.js';
 
+const { a, p, h1, div, nav, button } = tags;
+
 const appRoot = document.getElementById('app-root'); // Your main application container
 
 // Dummy page components (in a real app, these would be more complex)
-const Navigation = () => tags.nav(a({ href: "#!/" }, "Home"), a({ href: "#!/about" }, "About"))
-const HomePage = () => tags.div(
+const Navigation = () => nav(a({ href: "#!/" }, "Home"), a({ href: "#!/about" }, "About"));
+const HomePage = () => div(
   Navigation(),
-  tags.h1('Welcome Home!'),
-  tags.p('This is the homepage.'),
-  tags.button({ onclick: () => router.go('#!/about') }, 'Go to About')
+  h1('Welcome Home!'),
+  p('This is the homepage.'),
+  button({ onclick: () => router.go('#!/about') }, 'Go to About')
 );
-const AboutPage = () => tags.div(
+const AboutPage = () => div(
   Navigation(),
-  tags.h1('About Us'),
-  tags.p('Learn more about seui.'),
-  tags.button({ onclick: () => router.go('#!/user/123') }, 'Show profile: 123')
+  h1('About Us'),
+  p('Learn more about seui.'),
+  button({ onclick: () => router.go('#!/user/123') }, 'Show profile: 123')
 );
-const UserProfilePage = (userId) => tags.div(tags.h1(`User Profile for ID: ${userId}`));
+const UserProfilePage = (userId) => div(h1(`User Profile for ID: ${userId}`));
 
 router.init(appRoot, "/", {
   // Simple string routes
   "/": HomePage,
   "/about": () => AboutPage(),
-  // RegExp route for dynamic paths, the callback receives `prevUrl` and `nowUrl`
-  "#!/user/(\\d+)": (prev, now, userId) => {
+  // RegExp route with possible match groups
+  "#!/user/(\\d+)": (oldURL, newURL, userId) => {
     return UserProfilePage(userId || 'Unknown');
   },
   // Error route fallback
-  "#!/error/(.+)": (prev, now, message) => {
-    const errorMessage = decodeURIComponent(message);
-    return tags.div(tags.h1('Error!'), tags.p(`Page not found or error: ${errorMessage}`));
+  "#!/error/(.+)": (oldURL, newURL, message) => {
+    return div(h1('Error!'), p(`Page not found or error: ${decodeURIComponent(message)}`));
   },
 });
 ```
@@ -182,12 +179,15 @@ document.getElementById('increment-btn').addEventListener('click', () => {
 });
 
 setTimeout(() => {
-  statusMessage.value = 'Processing...'; // Using the setter
+  // its possible to update without notifying observers,
+  // by using the setter value
+  //statusMessage.value = 'Processing...';
+  statusMessage.update('Processing...');
 }, 1000);
 
 setTimeout(() => {
-  statusMessage.update('Done!'); // Using the update method directly
-  counter.value = 10;
+  statusMessage.update('Done!');
+  counter.update(10);
 }, 2000);
 ```
 
@@ -210,7 +210,7 @@ const appState = State({
 
 // Subscribe to ANY change in the entire appState
 appState.subscribe((obj, key, oldVal, newVal) => {
-  console.log(`[Global Change] Property '${String(key)}' changed.`, obj);
+  console.log(`[Global Change] Property '${key}' changed.`, obj);
 });
 
 // Subscribe to a specific property of the top-level object
@@ -220,7 +220,7 @@ appState.subscribe((obj, key, oldVal, newVal) => {
 
 // Subscribe to a specific property of a nested object
 appState.user.subscribe((userObj, key, oldVal, newVal) => {
-  console.log(`[User Name Change] User's '${String(key)}' updated to: ${newVal}`);
+  console.log(`[User Name Change] User's '${key}' updated to: ${newVal}`);
   document.getElementById('user-name-display').textContent = `User: ${userObj.firstName} ${userObj.lastName}`;
 }, 'firstName');
 
@@ -246,10 +246,11 @@ appState.user.lastName = 'Jones'; // This listener does NOT fire anymore
 Custom lifecycle events or methods used by the library.
 
 `"oncreate"` - This event will be invoked after element is created, but before it is added to the DOM.
+
 ```javascript
-span({ // function is passed to tags properties
+fragment({ // function is passed to tags properties
   oncreate: (e) => console.log("component created")
-}, "a span")
+}, "Here is dummy page")
 ```
 
 > [!NOTE]
@@ -257,17 +258,19 @@ span({ // function is passed to tags properties
 > These will not trigger when router is not in use.
 
 `"onmount"` - This event will be invoked after element is added to the DOM.
+
 ```javascript
-span({ // function is passed to tags properties
+fragment({ // function is passed to tags properties
   onmount: (e) => console.log("component mounted")
-}, "a span")
+}, "Here is dummy page")
 ```
 
 `"onunmount"` - This event will be invoked when element is removed from the DOM.
+
 ```javascript
-span({ // function is passed to tags properties
+fragment({ // function is passed to tags properties
   onunmount: (e) => console.log("component unmounted")
-}, "a span")
+}, "Here is dummy page")
 ```
 
 ### 7. Sample App
@@ -275,7 +278,7 @@ span({ // function is passed to tags properties
 Demonstrate the use of tags, routing, observable and navigation helper for cleanup.
 
 ```javascript
-import { tags, router, onceNavigate, Observable } from "../seui.js"
+import { tags, router, onceNavigate, Observable } from "./seui.js"
 
 const { a, b, p, h1, nav, form, span, textarea, button, input, fragment } = tags
 
@@ -288,13 +291,13 @@ function Home() {
   const counterSpan = span(counter.value.toString())
   const counterObserver = counter.subscribe(newValue => counterSpan.textContent = newValue.toString())
 
-  // cleanup routine on route change
-  onceNavigate((e) => {
-    console.log(`cleanup from: ${e.oldURL} to: ${e.newURL}`)
-    counter.unsubscribe(counterObserver)
-  })
-
   return fragment( // with fragment you can combine multiple elements without rendering extra div
+    {
+      onunmount: (e) => {
+        console.log("Unmounted. Remove listeners")
+        counter.unsubscribe(counterObserver)
+      }
+    },
     h1("Home page"),
     nav(
       a({ href: "#!/" }, "Home"),
@@ -304,7 +307,7 @@ function Home() {
     p("This is a paragraph, ", b("Some Bold Red Text!", { style: { color: "red" } })),
     p("Counter: ", counterSpan),
     button("Increment", {
-     onclick: () => counter.update(c => c + 1)
+      onclick: () => counter.update(c => c + 1)
     }),
   )
 }
@@ -346,11 +349,12 @@ router.init(document.body, "/", {
   "/": Home, // also the default route
   "/contact": Contact,
   // sample error route
-  "#!/error/(.+)": (prev, now, $1) => { // custom error route
-    console.log(`Error route navigated from ${prev} to ${now} with ${$1}`)
-    document.body.replaceChildren(tags.div("Error! You have navigated to the error page."),
-    tags.pre(decodeURIComponent($1)))
-    return false // stop further processing
+  "#!/error/(.+)": (oldURL, newURL, message) => {
+    console.log(`Error route navigated from ${oldURL} to ${newURL} with ${message}`)
+    return fragment(
+      tags.div("Error! You have navigated to the error page."),
+      tags.pre(decodeURIComponent(message))
+    )
   },
   // optional. sample error page
   // "#!/error/(.+)": ErrorPage,

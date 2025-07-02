@@ -4,7 +4,7 @@ import SampleDialog from "../components/SampleDialog.js"
 import SVGWorld from "../components/SVGWorld.js"
 import Navigation from "../components/Navigation.js"
 
-const { a, b, p, h1, fragment } = tags
+const { a, b, p, h1, ol, li, fragment } = tags
 
 export default function Home() {
 	return fragment(
@@ -22,7 +22,7 @@ export default function Home() {
 				console.log("Home lifecycle:", e.type)
 			},
 		},
-		h1("Demo of the SEUI library"),
+		h1(SVGWorld(), "SEUI Demo"),
 		Navigation(
 			a({ href: "#!/" }, "Home"),
 			a({ href: "#!/info" }, "Info"),
@@ -34,12 +34,12 @@ export default function Home() {
 			a({ href: "#!/observer-pattern" }, "Observer Pattern"),
 			a({ href: "#!/observable-proxy" }, "Observable Proxy"),
 		),
-		p({ style: { display: "flex" } },
-			"Hello",
-			SVGWorld(),
+		p("This page will demonstrate the use of the seui library and its components."),
+		p("More examples:",
+			ol(
+				li(a({ href: "/docs/userprofile/" }, "/docs/userprofile/")),
+			)
 		),
-		p("Paragraph, ", b("BoldText", { style: { color: "red" } })),
-		p("This page will demonstrate the use of the library and its components."),
 		SampleTimer({
 			id: "timer",
 			onTick: ({ target, timer, count }) => {

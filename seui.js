@@ -15,12 +15,7 @@ const LIFECYCLES = ["oncreate", "onmount", "onunmount"]
  * create a proxy object for HTML tags creation
  * @example
  * const { div, h1, p } = tags
- * div(h1("world"), p("world"), {
- *   style: { color: 'red' }, // add properties
- *   oncreate: (e) => { // use custom function
- *     console.log("element", e, "is created.")
- *   }
- * });
+ * div(h1("world"), p("world"), { style: { color: 'red' } });
  *
  * @type {TagsProxy} a proxy object for HTML tags
  */
@@ -117,9 +112,11 @@ export function ns(namespaceURI) {
 }
 
 /**
- * util function to merge objects
+ * util function to merge objects and apply attributes to elements
+ * @param {Object} target
+ * @param {Object} props
+ * @param {boolean} [forceAttribute=false] optional. force attribute assignment e.g. SVG element width/height
  * @returns {Object} merged object
- * @example merge({ a: 1 }, { b: 2 })
  */
 function merge(target, props, forceAttribute = false) {
 	for (const prop in props) {
@@ -280,10 +277,9 @@ export class Router {
 	 * router.init(document.body, "/", {
 	 *   "/": Home, // also the default route
 	 *   "/info": () => Info(),
-	 *   "#!/error/(.+)": (prev, now) => { // uses RegExp search
-	 *     console.log(`3. Navigated from ${prev} to ${now}`)
-	 *     document.body.replaceChildren(tags.div("Error! You have navigated to the error page."))
-	 *     return false // stop further processing
+	 *   "#!/error/(.+)": (oldURL, newURL, message) => { // uses RegExp search
+	 *     console.log(`3. Navigated from ${oldURL} to ${now} with ${message}`)
+	 *     return tags.div("Error! You have navigated to the error page with: ${message}"))
 	 *   },
 	 * })
 	 */
@@ -340,7 +336,10 @@ export class Router {
 			for (const key in routes) {
 				if (key.indexOf("#!/") !== 0 && location.hash === "#!" + key) {
 					routeCallback = routes[key];
-					routeCallbackPromise = Promise.resolve(routeCallback(oldURL, newURL));
+					routeCallbackPromise = Promise.resolve(routeCallback(
+						oldURL,
+						newURL
+					));
 					matchedRouteKey = key;
 					routeMatched = true;
 					break;
@@ -358,7 +357,11 @@ export class Router {
 						}
 						routeCallback = routes[key];
 						// If the callback needs regex groups, pass them.
-						routeCallbackPromise = Promise.resolve(routeCallback(oldURL, newURL, ...match.slice(1)));
+						routeCallbackPromise = Promise.resolve(routeCallback(
+							oldURL,
+							newURL,
+							...match.slice(1)
+						));
 						matchedRouteKey = key;
 						routeMatched = true;
 						break;
@@ -697,7 +700,8 @@ export class Observable {
 	 * @example
 	 * const observable = new Observable(0);
 	 * const observer = (newValue, oldValue) => console.log("Observable value changed from", oldValue, "to", newValue);
-	 * const unsubscribe = observable.subscribe(observer); // subscribes the observer and returns an unsubscribe function
+	 * // subscribes the observer and returns an unsubscribe function
+	 * const unsubscribe = observable.subscribe(observer);
 	 * unsubscribe(); // unsubscribes the observer
 	 * @example
 	 * const observable = new Observable(0);
@@ -774,13 +778,13 @@ export class Observable {
  * @type {Router}
  * @example
  * // In your main app module:
- * import { router } from './seui.js'; // or wherever you export it
+ * import { router } from './seui.js';
  * import Home from './pages/Home.js';
  * import Info from './pages/Info.js';
  *
  * router.init(document.body, "/", {
- * "/": Home,
- * "/info": () => Info(),
+ *   "/": Home,
+ *   "/info": () => Info(),
  * });
  *
  * // To navigate:
