@@ -160,6 +160,12 @@ router.go("#!/home")
 
 // or with data
 router.go("#!/home", { foo: "bar" })
+
+// normal href
+a({ href: "#!/home" }, "Home")
+
+// or
+location.href = "#!/home"
 ```
 
 Get router data from `router.state` that is Observable.
