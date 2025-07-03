@@ -246,15 +246,18 @@ export class Router {
 		this.routes = {}
 		/**
 		 * The observable state of the router.
-		 * @type {Observable<{ newURL: string, oldURL: string }>}
+		 * @type {Observable<{ newURL: string, oldURL: string, data: any }>}
 		 * @example
-		 * const unsubscribe = router.state.subscribe(({ newURL, oldURL }) => {
-		 *   console.log(`Route change from: ${oldURL} to: ${newURL}`)
+		 * const unsubscribe = router.state.subscribe(({ newURL, oldURL, data }) => {
+		 *   console.log(`Route change from: ${oldURL} to: ${newURL} with data:`, data)
 		 *   unsubscribe()
 		 * })
-		 * router.state.update({ newURL: '', oldURL: '' })
+		 * // update state
+		 * router.state.update({ newURL: '', oldURL: '', data: null })
+		 * // navigate to a new route with data
+		 * router.go("#!/info", { foo: "bar" })
 		 */
-		this.state = new Observable({ newURL: "", oldURL: "" })
+		this.state = new Observable({ newURL: "", oldURL: "", data: null })
 	}
 
 	/**
@@ -289,6 +292,7 @@ export class Router {
 		this.routes = routes
 		this.state.value.oldURL = "" // document.URL set initial URL eg. "http://localhost/"
 		this.state.value.newURL = ""
+		this.state.value.data = null
 		// make sure window event is binded only once
 		if (typeof this._onHashChange !== "function") {
 			this._onHashChange = this.onHashChange.bind(this)
@@ -315,7 +319,9 @@ export class Router {
 
 	/**
 	 * Update the router state based on the current URL.
-	 * Calls the appropriate route callback and updates the UI accordingly.
+	 * Call the appropriate route callback and updates the UI accordingly.
+	 * Call the lifecycle methods `onunmount` before the route update.
+	 * Call the lifecycle methods `onmount` after the route update.
 	 *
 	 * @param {string} [newURL] - optional. The new URL hash.
 	 * @param {string} [oldURL] - optional. The old URL hash.
@@ -378,10 +384,8 @@ export class Router {
 						bubbles: true,
 						cancelable: true,
 					}));
-					// @ts-ignore remove lifecycle events associated with the component
-					// queueMicrotask(() => removeEventListeners(this._activeComponent));
+					// remove events associated with the component
 					queueMicrotask(() => removeEventListeners(root));
-					// removeEventListeners(root)
 				}
 				// #endregion lifecycle before render
 
@@ -407,7 +411,11 @@ export class Router {
 				}
 
 				// signal route update
-				this.state.update({ newURL, oldURL });
+				this.state.update((current) => ({
+					...current,
+					newURL,
+					oldURL
+				}));
 
 				return;
 			}
@@ -429,11 +437,22 @@ export class Router {
 	 * This is a convenience wrapper for {@link https://developer.mozilla.org/en-US/docs/Web/API/Location/hash|window.location.hash}.
 	 *
 	 * @param {string} hash - The hash value to navigate to, including the "#!/" character.
+	 * @param {any} [data] - Optional set data in the router state.
+	 * The data will be available in the `data` parameter of the `route.state` subscriber.
 	 * @returns {void}
 	 * @example router.go("#!/home")
+	 * @example router.go("#!/home", { foo: "bar" })
 	 */
-	go(hash) {
+	go(hash, data) {
 		window.location.hash = hash
+		if (!data) {
+			return
+		}
+		// update data in current state
+		this.state.update((current) => ({
+			...current,
+			data
+		}))
 	}
 
 	/**
@@ -447,6 +466,18 @@ export class Router {
 	}
 
 	/**
+	 * Set the router data state.
+	 * @param {any} data - The data to set in the router state.
+	 * @returns {void}
+	 */
+	setData(data) {
+		this.state.update((current) => ({
+			...current,
+			data
+		}))
+	}
+
+	/**
 	 * Reset the router and remove the event listener
 	 * @returns {void}
 	 */
@@ -455,7 +486,7 @@ export class Router {
 		this.defaultRoute = ""
 		this.routes = {}
 		this.state.unsubscribeAll()
-		this.state.update({ newURL: "", oldURL: "" })
+		this.state.update({ newURL: "", oldURL: "", data: null })
 		if (typeof this._onHashChange === "function") {
 			window.removeEventListener('hashchange', this._onHashChange, false)
 			this._onHashChange = undefined

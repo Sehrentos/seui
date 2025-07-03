@@ -153,6 +153,45 @@ router.init(appRoot, "/", {
 });
 ```
 
+Navigate to pages and passing optional data along.
+
+```javascript
+router.go("#!/home")
+
+// or with data
+router.go("#!/home", { foo: "bar" })
+```
+
+Get router data from `router.state` that is Observable.
+```javascript
+// for example, you can read this in
+// components oncreate or onmount lifecycles
+// when page is created or navigated to
+const routerData = router.state.value.data
+```
+
+Observe router state changes.
+```javascript
+router.state.subscribe(({ newURL, oldURL, data }) => {
+  console.log(`Route change from: ${oldURL} to: ${newURL} with data:`, data)
+})
+```
+
+Set or "reset" the data from the router state.
+```javascript
+// reset data
+router.setData(null)
+
+// set new data
+router.setData({ "value": "123" })
+
+// this is equivalent to:
+router.state.update((current) => ({
+  ...current,
+  data: { "value": "123" }
+}))
+```
+
 ### 4. Reactive State with Observable
 
 Manage simple, isolated reactive values.
