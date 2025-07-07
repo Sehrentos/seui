@@ -3,11 +3,27 @@ import { tags, router, State } from "../../seui.js"
 const { a, p, h1, ol, li, br, button, fragment } = tags
 
 console.time("init simple app")
+const appState = State({ counter: 0, timestamp: Date.now(), logged: false }, true)
 
 // setup the router
 router.init(document.body, "/", {
 	"/": () => HomeView(),
-	"/users": () => UsersView(),
+	"/users": async () => {
+		console.log("validating login credentials...")
+		// optional. simulate async/await data fetching of some kind
+		await new Promise((resolve) => setTimeout(resolve, 1000))
+		if (appState.logged !== true) {
+			// not logged in sample
+			return tags.div(
+				{
+					onmount: () => {
+						setTimeout(() => router.go("/"), 1500)
+					}
+				},
+				"You are not logged in.")
+		}
+		return UsersView()
+	},
 	"#!/user/(\\d+)": (_, newURL, userId) => UserProfileView(userId), // uses RegExp match group
 	"#!/error/(.+)": (oldURL, newURL, message) => {
 		console.error(`Route Error from ${oldURL} to ${newURL} with ${message}`)
@@ -19,7 +35,6 @@ router.init(document.body, "/", {
 })
 
 function HomeView() {
-	const state = State({ counter: 0, timestamp: Date.now() }, true)
 	return fragment(
 		{
 			onmount: () => {
@@ -31,14 +46,15 @@ function HomeView() {
 		},
 		h1("Welcome!"),
 		p("This is the homepage of the user profile app."),
-		p("State.counter: ", ReactiveSpan(state, "counter")),
-		p("State.timestamp: ", ReactiveSpan(state, "timestamp")),
+		p("State.counter: ", ReactiveSpan(appState, "counter")),
+		p("State.timestamp: ", ReactiveSpan(appState, "timestamp")),
 		button({
 			onclick: () => {
-				state.counter++;
-				state.timestamp = Date.now()
+				appState.counter++;
+				appState.timestamp = Date.now()
+				appState.logged = true
 			}
-		}, "Increment Counter"),
+		}, "Demo login"),
 		br(),
 		button({ onclick: () => router.go("#!/users") }, "Go to Users")
 	)

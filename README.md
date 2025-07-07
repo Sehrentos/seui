@@ -116,11 +116,14 @@ export default function SVGWorld() {
 Set up routes and navigate through your single-page application.
 
 ```javascript
-import { tags, router } from './seui.js';
+import { tags, router, State } from './seui.js';
 
 const { a, p, h1, div, nav, button } = tags;
 
 const appRoot = document.getElementById('app-root'); // Your main application container
+
+// optional. state
+const appState = State({ logged: false })
 
 // Dummy page components (in a real app, these would be more complex)
 const Navigation = () => nav(a({ href: "#!/" }, "Home"), a({ href: "#!/about" }, "About"));
@@ -145,6 +148,23 @@ router.init(appRoot, "/", {
   // RegExp route with possible match groups
   "#!/user/(\\d+)": (oldURL, newURL, userId) => {
     return UserProfilePage(userId || 'Unknown');
+  },
+  // Example async/await use
+  "/users": async () => {
+    console.log("validating login credentials...")
+    // optional. simulate async/await data fetching of some kind
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    if (!appState.logged) {
+      // not logged in sample
+      return div(
+        {
+          onmount: () => {
+            setTimeout(() => router.go("/"), 1500)
+          }
+        },
+        "You are not logged in.")
+    }
+    return div("Okay, here is user info...")
   },
   // Error route fallback
   "#!/error/(.+)": (oldURL, newURL, message) => {
@@ -305,23 +325,23 @@ State helper example:
  * )
  */
 function ReactiveSpan(state, propName) {
-	let unsubscribe
+  let unsubscribe
 
-	const textSpan = tags.span(
-		{
-			onmount: (e) => {
-				unsubscribe = state.subscribe(() => {
-					textSpan.textContent = String(state[propName])
-				})
-			},
-			onunmount: () => {
-				if (typeof unsubscribe === "function") unsubscribe()
-			},
-		},
-		state[propName]
-	)
+  const textSpan = tags.span(
+    {
+      onmount: (e) => {
+        unsubscribe = state.subscribe(() => {
+          textSpan.textContent = String(state[propName])
+        })
+      },
+      onunmount: () => {
+        if (typeof unsubscribe === "function") unsubscribe()
+      },
+    },
+    state[propName]
+  )
 
-	return textSpan
+  return textSpan
 }
 ```
 
