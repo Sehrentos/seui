@@ -286,6 +286,45 @@ removeUserLastNameListener(); // Unsubscribe it
 appState.user.lastName = 'Jones'; // This listener does NOT fire anymore
 ```
 
+State helper example:
+```javascript
+/**
+ * Helper that creates a span element that automatically updates its text content
+ * based on the specified property of the given reactive state.
+ *
+ * @param {Object} state - The reactive state object to subscribe to.
+ * @param {string} propName - The property name within the state to observe.
+ * @returns {HTMLElement} A span element displaying the current value of the state property.
+ *
+ * @example
+ * const state = State({ counter: 0 }, true)
+ * // ...
+ * div(
+ *   ReactiveSpan(state, "counter"),
+ *   button({ onclick: () => state.counter++ }, "Increment Counter"),
+ * )
+ */
+function ReactiveSpan(state, propName) {
+	let unsubscribe
+
+	const textSpan = tags.span(
+		{
+			onmount: (e) => {
+				unsubscribe = state.subscribe(() => {
+					textSpan.textContent = String(state[propName])
+				})
+			},
+			onunmount: () => {
+				if (typeof unsubscribe === "function") unsubscribe()
+			},
+		},
+		state[propName]
+	)
+
+	return textSpan
+}
+```
+
 ### 6. Custom lifecycle Events
 
 Custom lifecycle events or methods used by the library.

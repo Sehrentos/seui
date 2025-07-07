@@ -35,7 +35,7 @@ export const tags = new Proxy({}, {
  * @param {string|null} namespace - The namespace URI of the element to be created.
  * @param {string} tag - The type of element to be created.
  * @param {Array<any>} children - The children to append to the created element or properties.
- * @returns {Element|HTMLElement|DocumentFragment} The created element with appended children.
+ * @returns {Element|HTMLElement|DocumentFragment|Text} The created element with appended children.
  * @throws {TypeError} If the tag is not a string.
  */
 export function createElement(namespace, tag, children) {
@@ -52,6 +52,8 @@ export function createElement(namespace, tag, children) {
 		)
 	} else if (tag === "fragment") {
 		element = document.createDocumentFragment()
+	} else if (tag === "text") {
+		element = document.createTextNode("")
 	} else {
 		element = document.createElement(tag, elementCreateOptions)
 	}
@@ -63,12 +65,22 @@ export function createElement(namespace, tag, children) {
 			continue;
 		}
 		if (typeof child === "string") {
-			// add string as text node
-			element.appendChild(document.createTextNode(child))
+			// when element itself is Text node
+			if (element instanceof Text) {
+				element.nodeValue = child
+			} else {
+				// add string as text node
+				element.appendChild(document.createTextNode(child))
+			}
 		} else if (child instanceof String || typeof child === "number"
 			|| typeof child === "boolean" || typeof child === "bigint") {
-			// add as text node
-			element.appendChild(document.createTextNode(String(child)))
+			// when element itself is Text node
+			if (element instanceof Text) {
+				element.nodeValue = String(child)
+			} else {
+				// add as text node
+				element.appendChild(document.createTextNode(String(child)))
+			}
 		} else if (child instanceof Element || child instanceof DocumentFragment
 			|| (typeof child === "object" && typeof child.appendChild === "function")) {
 			// add as element
@@ -81,8 +93,11 @@ export function createElement(namespace, tag, children) {
 
 	// dispatch oncreate lifecycle event
 	element.dispatchEvent(new CustomEvent('create', {
-		bubbles: true,
+		bubbles: false,
 		cancelable: true,
+		detail: {
+			component: element
+		}
 	}))
 
 	return element
@@ -131,7 +146,7 @@ function merge(target, props, forceAttribute = false) {
 				|| target instanceof DocumentFragment
 				|| (typeof target === "object" && typeof target.appendChild === "function")) {
 				// custom lifecycle handling for events
-				if (prop.indexOf("on") === 0 || LIFECYCLES.includes(prop)) {
+				if (prop.indexOf("on") === 0) {
 					// add event listener
 					addEventListener(target, prop.slice(2), props[prop])
 					continue
@@ -170,6 +185,11 @@ function addEventListener(element, key, handler) {
 		element['_listeners'] = []
 	}
 	element['_listeners'].push({ key, handler })
+	// if (LIFECYCLES.includes(key)) {
+	// 	// @ts-ignore string is valid key
+	// 	element.addEventListener(key, handler, { capture: true })
+	// 	return
+	// }
 	// @ts-ignore string is valid key
 	element.addEventListener(key, handler)
 }
@@ -189,6 +209,11 @@ function removeEventListener(element, key, handler) {
 		const listener = element['_listeners'][i]
 		if (listener.key === key && listener.handler === handler) {
 			element['_listeners'].splice(i, 1)
+			// if (LIFECYCLES.includes(key)) {
+			// 	// @ts-ignore string is valid key
+			// 	element.removeEventListener(key, handler, { capture: true })
+			// 	return
+			// }
 			// @ts-ignore string is valid key
 			element.removeEventListener(key, handler)
 			return
@@ -217,10 +242,35 @@ function removeEventListeners(element) {
 	}
 	if (element['_listeners'] != null) {
 		for (const listener of element['_listeners']) {
+			// if (LIFECYCLES.includes(listener.key)) {
+			// 	element.removeEventListener(listener.key, listener.handler, { capture: true })
+			// } else {
 			element.removeEventListener(listener.key, listener.handler)
+			// }
 			// console.log("Removed listener:", listener)
 		}
 		element['_listeners'] = null
+	}
+}
+
+/**
+ * Dispatches a custom event on the given target element and all its child elements.
+ *
+ * This function traverses through the DOM tree starting from the given element,
+ * and dispatches the given event on every traversed element.
+ *
+ * @param {HTMLElement|Element} target - The DOM element on which to dispatch the event.
+ * @param {CustomEvent} event - The event to dispatch.
+ */
+function invokeEvent(target, event) {
+	if (target == null) {
+		return
+	}
+	target.dispatchEvent(event)
+	if (target.children.length > 0) {
+		for (const child of target.children) {
+			invokeEvent(child, event)
+		}
 	}
 }
 
@@ -379,13 +429,23 @@ export class Router {
 			if (routeMatched && routeCallback) {
 				// #region lifecycle before render
 				if (this._activeComponent) {
-					// dispatch lifecycle event onunmount
-					this._activeComponent.dispatchEvent(new CustomEvent('unmount', {
-						bubbles: true,
+					// dispatch lifecycle event
+					const unmountEvent = new CustomEvent('unmount', {
+						bubbles: false,
 						cancelable: true,
-					}));
+						detail: {
+							component: this._activeComponent
+						}
+					});
+					// Note: this event will execute on DocumentFragment
+					if (this._activeComponent instanceof DocumentFragment) {
+						this._activeComponent.dispatchEvent(unmountEvent);
+					}
+					// dispatch lifecycle event on every child element
+					// Note: this event will NOT execute on DocumentFragment
+					invokeEvent(root, unmountEvent);
 					// remove events associated with the component
-					queueMicrotask(() => removeEventListeners(root));
+					removeEventListeners(root);
 				}
 				// #endregion lifecycle before render
 
@@ -403,10 +463,20 @@ export class Router {
 					this._activeComponent = routeCallbackResult;
 
 					// dispatch lifecycle event onmount
-					routeCallbackResult.dispatchEvent(new CustomEvent('mount', {
-						bubbles: true,
+					const mountEvent = new CustomEvent('mount', {
+						bubbles: false,
 						cancelable: true,
-					}));
+						detail: {
+							component: this._activeComponent
+						}
+					})
+					// Note: this will execute on DocumentFragment
+					if (routeCallbackResult instanceof DocumentFragment) {
+						routeCallbackResult.dispatchEvent(mountEvent);
+					}
+					// dispatch lifecycle event onmount on every child element
+					// Note: this event will NOT execute on DocumentFragment
+					invokeEvent(root, mountEvent);
 					// #endregion lifecycle after render
 				}
 

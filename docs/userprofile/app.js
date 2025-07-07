@@ -1,6 +1,6 @@
 // sample app with routing
 import { tags, router, State } from "../../seui.js"
-const { a, p, h1, ol, li, button, fragment } = tags
+const { a, p, h1, ol, li, br, button, fragment } = tags
 
 console.time("init simple app")
 
@@ -19,11 +19,65 @@ router.init(document.body, "/", {
 })
 
 function HomeView() {
+	const state = State({ counter: 0, timestamp: Date.now() }, true)
 	return fragment(
+		{
+			onmount: () => {
+				console.log("HomeView::onmount")
+			},
+			onunmount: () => {
+				console.log("HomeView::onunmount")
+			},
+		},
 		h1("Welcome!"),
 		p("This is the homepage of the user profile app."),
+		p("State.counter: ", ReactiveSpan(state, "counter")),
+		p("State.timestamp: ", ReactiveSpan(state, "timestamp")),
+		button({
+			onclick: () => {
+				state.counter++;
+				state.timestamp = Date.now()
+			}
+		}, "Increment Counter"),
+		br(),
 		button({ onclick: () => router.go("#!/users") }, "Go to Users")
 	)
+}
+
+/**
+ * Helper that creates a span element that automatically updates its text content
+ * based on the specified property of the given reactive state.
+ *
+ * @param {Object} state - The reactive state object to subscribe to.
+ * @param {string} propName - The property name within the state to observe.
+ * @returns {HTMLElement} A span element displaying the current value of the state property.
+ *
+ * @example
+ * const state = State({ counter: 0 }, true)
+ * // ...
+ * div(
+ *   ReactiveSpan(state, "counter"),
+ *   button({ onclick: () => state.counter++ }, "Increment Counter"),
+ * )
+ */
+function ReactiveSpan(state, propName) {
+	let unsubscribe
+
+	const textSpan = tags.span(
+		{
+			onmount: (e) => {
+				unsubscribe = state.subscribe(() => {
+					textSpan.textContent = String(state[propName])
+				})
+			},
+			onunmount: () => {
+				if (typeof unsubscribe === "function") unsubscribe()
+			},
+		},
+		state[propName]
+	)
+
+	return textSpan
 }
 
 function UsersView() {
