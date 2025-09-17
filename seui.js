@@ -41,7 +41,7 @@ export const tags = new Proxy({}, {
 export function createElement(namespace, tag, children) {
 	let element
 	// find object with "is" attribute
-	let elementCreateOptions = children.find(p => typeof p === "object" && p.constructor === Object && typeof p.is === "string")
+	let elementCreateOptions = children.find(p => p != null && typeof p === "object" && p.constructor === Object && typeof p.is === "string")
 
 	// create element
 	if (namespace) {
@@ -148,6 +148,12 @@ function merge(target, props, forceAttribute = false) {
 				// custom lifecycle handling for events
 				if (prop.indexOf("on") === 0) {
 					// add event listener
+					// eg. ontouchstart: [(e) => { ... }, { passive: true }]
+					if (Array.isArray(props[prop])) { // use capture
+						addEventListener(target, prop.slice(2), props[prop][0], props[prop][1])
+						continue
+					}
+					// normal
 					addEventListener(target, prop.slice(2), props[prop])
 					continue
 				}
@@ -177,37 +183,39 @@ function merge(target, props, forceAttribute = false) {
  * Adds an event listener to an element and stores it in the element's
  * internal `_listeners` array.
  * @param {Element} element
- * @param {string} key
- * @param {function} handler
+ * @param {string} type
+ * @param {(this: Element, ev: Event) => any} handler
+ * @param {boolean | AddEventListenerOptions} [options] Optional. Options to pass eg. `{ capture: true }`
  */
-function addEventListener(element, key, handler) {
+function addEventListener(element, type, handler, options) {
 	if (element['_listeners'] === undefined) {
 		element['_listeners'] = []
 	}
-	element['_listeners'].push({ key, handler })
+	element['_listeners'].push({ key: type, handler, options })
 	// if (LIFECYCLES.includes(key)) {
 	// 	// @ts-ignore string is valid key
 	// 	element.addEventListener(key, handler, { capture: true })
 	// 	return
 	// }
 	// @ts-ignore string is valid key
-	element.addEventListener(key, handler)
+	element.addEventListener(type, handler, options)
 }
 
 /**
  * Removes an event listener from an element and removes it from the element's
  * internal `_listeners` array.
  * @param {Element} element
- * @param {string} key
- * @param {function} handler
+ * @param {string} type
+ * @param {(this: Element, ev: Event) => any} handler
+ * @param {boolean | AddEventListenerOptions} [options] Optional. Options to pass eg. `{ capture: true }`
  */
-function removeEventListener(element, key, handler) {
+function removeEventListener(element, type, handler, options) {
 	if (element['_listeners'] == null) {
 		return
 	}
 	for (let i = 0; i < element['_listeners'].length; i++) {
 		const listener = element['_listeners'][i]
-		if (listener.key === key && listener.handler === handler) {
+		if (listener.key === type && listener.handler === handler && listener.options === options) {
 			element['_listeners'].splice(i, 1)
 			// if (LIFECYCLES.includes(key)) {
 			// 	// @ts-ignore string is valid key
@@ -215,7 +223,7 @@ function removeEventListener(element, key, handler) {
 			// 	return
 			// }
 			// @ts-ignore string is valid key
-			element.removeEventListener(key, handler)
+			element.removeEventListener(type, handler, options)
 			return
 		}
 	}
@@ -245,7 +253,7 @@ function removeEventListeners(element) {
 			// if (LIFECYCLES.includes(listener.key)) {
 			// 	element.removeEventListener(listener.key, listener.handler, { capture: true })
 			// } else {
-			element.removeEventListener(listener.key, listener.handler)
+			element.removeEventListener(listener.key, listener.handler, listener.options)
 			// }
 			// console.log("Removed listener:", listener)
 		}

@@ -84,6 +84,11 @@ const App = () => {
 document.body.appendChild(App())
 ```
 
+Using event capture or options with `on` binding:
+```js
+div("Sample element", { ontouchstart: [(e) => console.log(e.type), { passive: true }] })
+```
+
 ### 2. Namespaced Tags (e.g., SVG)
 
 Create SVG elements with proper namespaces.
