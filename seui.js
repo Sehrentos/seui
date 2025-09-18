@@ -59,36 +59,8 @@ export function createElement(namespace, tag, children) {
 	}
 
 	// Process children or properties of an element.
-	// Invoke custom `oncreate` function if provided, that is invoked before element is added into DOM.
 	for (const child of children) {
-		if (child == null) {
-			continue;
-		}
-		if (typeof child === "string") {
-			// when element itself is Text node
-			if (element instanceof Text) {
-				element.nodeValue = child
-			} else {
-				// add string as text node
-				element.appendChild(document.createTextNode(child))
-			}
-		} else if (child instanceof String || typeof child === "number"
-			|| typeof child === "boolean" || typeof child === "bigint") {
-			// when element itself is Text node
-			if (element instanceof Text) {
-				element.nodeValue = String(child)
-			} else {
-				// add as text node
-				element.appendChild(document.createTextNode(String(child)))
-			}
-		} else if (child instanceof Element || child instanceof DocumentFragment
-			|| (typeof child === "object" && typeof child.appendChild === "function")) {
-			// add as element
-			element.appendChild(child)
-		} else if (child.constructor === Object) {
-			// merge plain objects
-			merge(element, child, !!namespace)
-		}
+		if (child != null) applyChildProperties(element, child, !!namespace)
 	}
 
 	// dispatch oncreate lifecycle event
@@ -101,6 +73,40 @@ export function createElement(namespace, tag, children) {
 	}))
 
 	return element
+}
+
+/**
+ * Helper for processing children or properties of an element.
+ * @param {*} element
+ * @param {*} child
+ * @param {boolean} [useAttrOnly=false]
+ */
+function applyChildProperties(element, child, useAttrOnly = false) {
+	if (typeof child === "string") {
+		// when element itself is Text node
+		if (element instanceof Text) {
+			element.nodeValue = child
+		} else {
+			// add string as text node
+			element.appendChild(document.createTextNode(child))
+		}
+	} else if (child instanceof String || typeof child === "number"
+		|| typeof child === "boolean" || typeof child === "bigint") {
+		// when element itself is Text node
+		if (element instanceof Text) {
+			element.nodeValue = String(child)
+		} else {
+			// add as text node
+			element.appendChild(document.createTextNode(String(child)))
+		}
+	} else if (child instanceof Element || child instanceof DocumentFragment
+		|| (typeof child === "object" && typeof child.appendChild === "function")) {
+		// add as element
+		element.appendChild(child)
+	} else if (child.constructor === Object) {
+		// merge plain objects
+		merge(element, child, useAttrOnly)
+	}
 }
 
 /**
@@ -147,14 +153,14 @@ function merge(target, props, forceAttribute = false) {
 				|| (typeof target === "object" && typeof target.appendChild === "function")) {
 				// custom lifecycle handling for events
 				if (prop.indexOf("on") === 0) {
-					// add event listener
+					// add event listener with capture/options
 					// eg. ontouchstart: [(e) => { ... }, { passive: true }]
-					if (Array.isArray(props[prop])) { // use capture
-						addEventListener(target, prop.slice(2), props[prop][0], props[prop][1])
+					if (Array.isArray(props[prop])) {
+						addListener(target, prop.slice(2), props[prop][0], props[prop][1])
 						continue
 					}
 					// normal
-					addEventListener(target, prop.slice(2), props[prop])
+					addListener(target, prop.slice(2), props[prop])
 					continue
 				}
 			}
@@ -187,7 +193,7 @@ function merge(target, props, forceAttribute = false) {
  * @param {(this: Element, ev: Event) => any} handler
  * @param {boolean | AddEventListenerOptions} [options] Optional. Options to pass eg. `{ capture: true }`
  */
-function addEventListener(element, type, handler, options) {
+function addListener(element, type, handler, options) {
 	if (element['_listeners'] === undefined) {
 		element['_listeners'] = []
 	}
@@ -209,7 +215,7 @@ function addEventListener(element, type, handler, options) {
  * @param {(this: Element, ev: Event) => any} handler
  * @param {boolean | AddEventListenerOptions} [options] Optional. Options to pass eg. `{ capture: true }`
  */
-function removeEventListener(element, type, handler, options) {
+function removeListener(element, type, handler, options) {
 	if (element['_listeners'] == null) {
 		return
 	}
@@ -239,13 +245,13 @@ function removeEventListener(element, type, handler, options) {
  *
  * @param {HTMLElement|Element} element - The DOM element from which to remove event listeners.
  */
-function removeEventListeners(element) {
+function removeListeners(element) {
 	if (element == null) {
 		return
 	}
 	if (element.children.length > 0) {
 		for (const child of element.children) {
-			removeEventListeners(child)
+			removeListeners(child)
 		}
 	}
 	if (element['_listeners'] != null) {
@@ -453,7 +459,7 @@ export class Router {
 					// Note: this event will NOT execute on DocumentFragment
 					invokeEvent(root, unmountEvent);
 					// remove events associated with the component
-					removeEventListeners(root);
+					removeListeners(root);
 				}
 				// #endregion lifecycle before render
 
@@ -686,7 +692,7 @@ export function State(target, isAsync = false) {
 		get(currentTarget, key, receiver) {
 			if (key === 'isProxy') return true;
 
-			// --- Subscription methods ---
+			//#region Subscription methods
 			if (key === 'subscribe') {
 				return (callback, specificKey = null) => {
 					if (typeof callback !== 'function') {
@@ -717,7 +723,7 @@ export function State(target, isAsync = false) {
 					}
 				};
 			}
-			// --- End Subscription methods ---
+			//#endregion Subscription methods
 
 			const prop = currentTarget[key];
 
@@ -782,45 +788,39 @@ export function State(target, isAsync = false) {
 // #region Observable
 /**
  * Callback function invoked when an observable's value changes.
- * @typedef {(newValue: T, oldValue: T, observer: ObserverCallback<T>) => void} ObserverCallback
+ * @typedef {(newValue?: T, oldValue?: T, observer?: ObserverCallback<T>, thisArg?: Observable) => void} ObserverCallback
  * @template T The type of the Observable's value for this specific callback instance.
  */
 
 /**
  * An observable value that can be updated and observed.
- * @template T The type of the value held by the Observable.
+ *
+ * @template T
  */
 export class Observable {
 	/**
 	 * Create an Observable instance with the given initial value.
-	 * @param {T} value Initial value of the observable.
+	 * @param {T} initValue Initial value of the observable.
+	 * @param {ObserverCallback<T>[]} [initObservers] optional. Initial observers/subscribers of the observable.
 	 */
-	constructor(value) {
-		/** @type {T} */
-		this._value = value;
-		/** @type {Array<ObserverCallback<T>>} */
-		this.observers = [];
+	constructor(initValue, ...initObservers) {
+		/**
+		 * The current value of the Observable. Can be used to get current value.
+		 * Or set new value to the Observable without notifying observers.
+		 * @type {T}
+		 */
+		this.value = initValue;
+		/**
+		 * The list of observers.
+		 * @type {ObserverCallback<T>[]}
+		 */
+		this.observers = [...initObservers];
 	}
 
 	/**
 	 * Add an observer to the list of observers.
 	 * @param {ObserverCallback<T>} observer The function to be called when the observable's value changes.
 	 * @returns {UnsubscribeFunction} A function to unsubscribe the observer from the list of observers.
-	 * @example
-	 * const observable = new Observable(0);
-	 * const observer = (newValue, oldValue) => console.log("Observable value changed from", oldValue, "to", newValue);
-	 * // subscribes the observer and returns an unsubscribe function
-	 * const unsubscribe = observable.subscribe(observer);
-	 * unsubscribe(); // unsubscribes the observer
-	 * @example
-	 * const observable = new Observable(0);
-	 * const unsubscribe = observable.subscribe(function observerCallback(newValue, oldValue, observer) {
-	 * 	console.log("Observable value changed from", oldValue, "to", newValue);
-	 *  // unsubscribe from the observable:
-	 *  unsubscribe();
-	 *  observable.unsubscribe(observer); // or this
-	 *  observable.unsubscribe(observerCallback); // or this
-	 * })
 	 */
 	subscribe(observer) {
 		this.observers.push(observer);
@@ -848,35 +848,18 @@ export class Observable {
 	 * Update the value of the Observable.
 	 * If the argument is a function, it's called with the current value as argument.
 	 * If the argument is not a function, the value is simply updated to the given value.
-	 * Any registered observers are called with the new and old value after the update.
-	 * @param {((value: T) => T) | T} [updater] The value or a function to update the value with.
+	 *
+	 * @param {((newValue: T) => T) | T} [updater] The value or a function to update the value with.
 	 */
 	update(updater) {
-		let oldValue = this._value;
+		let oldValue = this.value;
 		if (typeof updater === 'function') {
 			// @ts-ignore function type is checked
-			this._value = updater(this._value);
+			this.value = updater(this.value);
 		} else {
-			this._value = updater;
+			this.value = updater;
 		}
-		this.observers.forEach((observer) => observer(this._value, oldValue, observer));
-	}
-
-	/**
-	 * The current value of the Observable.
-	 * @type {T}
-	 */
-	get value() {
-		return this._value;
-	}
-
-	/**
-	 * Sets the value of the Observable without notifying observers.
-	 * @param {T} value The new value to set.
-	 * @returns {void}
-	 */
-	set value(value) {
-		this._value = value;
+		this.observers.forEach((observer) => observer(this.value, oldValue, observer, this));
 	}
 }
 // #endregion Observable

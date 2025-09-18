@@ -3,8 +3,12 @@ import SampleTimer from "../components/SampleTimer.js"
 import SampleDialog from "../components/SampleDialog.js"
 import SVGWorld from "../components/SVGWorld.js"
 import Navigation from "../components/Navigation.js"
+import SampleTimerObservable from "../components/SampleTimerObservable.js"
 
-const { a, b, p, h1, ol, li, fragment } = tags
+const { a, p, h1, ol, li, fragment } = tags
+
+// sample observable component
+const observableTimer = SampleTimerObservable({ count: 0, stopAfter: 5 })
 
 export default function Home() {
 	return fragment(
@@ -40,6 +44,9 @@ export default function Home() {
 				li(a({ href: "/docs/userprofile/" }, "/docs/userprofile/")),
 			)
 		),
+		// this is an observable, so use value here:
+		observableTimer.value,
+		// this returns an HTMLElement:
 		SampleTimer({
 			id: "timer",
 			onTick: ({ target, timer, count }) => {

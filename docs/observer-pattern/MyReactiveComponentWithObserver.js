@@ -1,6 +1,5 @@
-import { tags } from "../../seui.js";
+import { tags, Observable } from "../../seui.js";
 import Navigation from "../components/Navigation.js";
-import Observable from "./Observable.js";
 const { a, h1, p, div, button } = tags;
 
 // Our UI state
