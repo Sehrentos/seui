@@ -6,7 +6,11 @@ import Observable from "./Observable.js"
 
 export class Router {
 	/**
-	 * The constructor for the Router class.
+	 * The constructor for the "hashbang" Router class.
+	 *
+	 * Why hashbang? Because it uses the URL hash (the part after the `#` symbol) to manage client-side routing.
+	 * It required zero configuration and works in all browsers without needing server-side support (404) for routing.
+	 * It listens for changes to the URL hash and updates the UI accordingly based on the defined routes.
 	 *
 	 * @example
 	 * import { Router } from "./seui.js"
@@ -325,12 +329,12 @@ function invokeEvent(target, event) {
 	if (target == null) {
 		return
 	}
-	target.dispatchEvent(event)
 	if (target.children.length > 0) {
 		for (const child of target.children) {
 			invokeEvent(child, event)
 		}
 	}
+	target.dispatchEvent(event)
 }
 
 /**
@@ -412,3 +416,239 @@ function removeListeners(element) {
  * router.go("#!/info");
  */
 export const router = new Router()
+
+/**
+ * Converts a route path with parameters (e.g., "/user/:id") into a regular expression for matching URLs.
+ * @param {string} path
+ * @returns
+ */
+const pathToRegex = (path) => new RegExp("^" + path.replace(/\//g, "\\/").replace(/:\w+/g, "([^/]+)") + "$");
+
+export class HistoryRouter {
+	/**
+	 * The constructor for the HistoryRouter class.
+	 * It initializes the router with optional root element, default route, and route definitions.
+	 * The router uses the History API to manage client-side routing without relying on URL hashes.
+	 *
+	 * @param {HTMLElement} [root] root element
+	 * @param {string} [defaultRoute] default route
+	 * @param {TRoute} [routes] route url can callback Object
+	 *
+	 * @example
+	 * import { HistoryRouter } from "seui/router"
+	 * const router = new HistoryRouter(document.body, "/", {
+	 *   "/": Home, // also the default route
+	 *   "/info": Info,
+	 *   "/user/:id": (prev, now, state, id) => {
+	 *   	console.log(`3. Navigated from ${prev} to ${now} with ${id}`, state)
+	 *   	return div("Hello! You have navigated to the user page with ID: " + id)
+	 *   },
+	 *   "/album/:id/detail/:type": (prev, now, state, id, type) => {
+	 *   	console.log(`3. Navigated from ${prev} to ${now} with ${id}`, state)
+	 *   	return div("Hello! You have navigated to the album detail page with ID: " + id + " and type: " + type)
+	 *   },
+	 *  "/error": ErrorPage
+	 * })
+	 */
+	constructor(root, defaultRoute, routes) {
+		/** @type {HTMLElement|undefined|null} */
+		this.root = root
+		/** @type {string} */
+		this.defaultRoute = defaultRoute || "/"
+		/** @type {TRoute} */
+		this.routes = routes || {}
+		/** @type {string} */
+		this.oldURL = window.location.pathname
+
+		window.addEventListener('popstate', this.onPopState.bind(this), false)
+		window.addEventListener('load', () => this.update(), false)
+	}
+
+	/**
+	 * Set up the router.
+	 * @param {HTMLElement} root root element
+	 * @param {string} defaultRoute default route
+	 * @param {TRoute} routes route url can callback Object
+	 */
+	init(root, defaultRoute, routes) {
+		this.root = root
+		this.defaultRoute = defaultRoute || "/"
+		this.routes = routes || {}
+	}
+
+	/**
+	 * Handles the popstate event, triggered when the active history entry changes.
+	 * This method is intended to manage navigation state changes due to user
+	 * interactions with the browser's back and forward buttons, or programmatic
+	 * calls to history.pushState() or history.replaceState().
+	 * @param {PopStateEvent} e
+	 */
+	onPopState(e) {
+		this.update(e.state)
+	}
+
+	/**
+	 * Update the router state based on the current URL.
+	 * Call the appropriate route callback and updates the UI accordingly.
+	 * Call the lifecycle methods `onunmount` before the route update.
+	 * Call the lifecycle methods `onmount` after the route update.
+	 * @param {any} [state]
+	 */
+	async update(state) {
+		const newURL = window.location.pathname
+		const root = this.root;
+		const defaultRoute = this.defaultRoute;
+		const routes = this.routes;
+		const oldURL = this.oldURL;
+		this.oldURL = newURL;
+
+		console.log(`update from ${oldURL} to ${newURL}`, state)
+
+		try {
+			let routeCallback;
+			let routeCallbackPromise;
+			let routeMatched = false;
+			let matchedRouteKey = ''; // Store the key that matched for potential use with regex groups
+
+			// Try to match string routes first (exact hash match)
+			for (const key in routes) {
+				if (key === newURL) {
+					routeCallback = routes[key];
+					routeCallbackPromise = Promise.resolve(routeCallback(
+						oldURL,
+						newURL,
+						state
+					));
+					matchedRouteKey = key;
+					routeMatched = true;
+					break;
+				}
+			}
+
+			// If no string route matched, try RegExp routes
+			if (!routeMatched) {
+				for (const key in routes) {
+					const regExp = pathToRegex(key);
+					const match = newURL.match(regExp);
+					if (!match) {
+						continue
+					}
+					routeCallback = routes[key];
+					// If the callback needs regex groups, pass them.
+					routeCallbackPromise = Promise.resolve(routeCallback(
+						oldURL,
+						newURL,
+						state,
+						...match.slice(1)
+					));
+					matchedRouteKey = key;
+					routeMatched = true;
+					break;
+				}
+			}
+
+			// Handle the matched route or fallback to default/error
+			if (routeMatched && routeCallback) {
+				// #region lifecycle before render
+				if (this._activeComponent) {
+					// dispatch lifecycle event
+					const unmountEvent = new CustomEvent('unmount', {
+						bubbles: false,
+						cancelable: true,
+						detail: {
+							component: this._activeComponent
+						}
+					});
+					// Note: this event will execute on DocumentFragment
+					if (this._activeComponent instanceof DocumentFragment) {
+						this._activeComponent.dispatchEvent(unmountEvent);
+					}
+					// dispatch lifecycle event on every child element
+					// Note: this event will NOT execute on DocumentFragment
+					if (root) invokeEvent(root, unmountEvent);
+					// remove events associated with the component
+					if (root) removeListeners(root);
+				}
+				// #endregion lifecycle before render
+
+				// wait for the route callback
+				const routeCallbackResult = await routeCallbackPromise;
+
+				// Handle rendering of the new route
+				// when routeCallbackResult is a Node
+				if (routeCallbackResult instanceof Node) {
+					// prevent unnecessary pushState if URL is already correct
+					if (newURL !== window.location.pathname) {
+						// update URL without reloading the page
+						window.history.pushState(state || {}, "", newURL)
+					}
+
+					// render
+					if (root) root.replaceChildren(routeCallbackResult);
+
+					// #region lifecycle after render
+					// store the current component instance for later use
+					this._activeComponent = routeCallbackResult;
+
+					// dispatch lifecycle event onmount
+					const mountEvent = new CustomEvent('mount', {
+						bubbles: false,
+						cancelable: true,
+						detail: {
+							component: this._activeComponent
+						}
+					})
+					// Note: this will execute on DocumentFragment
+					if (routeCallbackResult instanceof DocumentFragment) {
+						routeCallbackResult.dispatchEvent(mountEvent);
+					}
+					// dispatch lifecycle event onmount on every child element
+					// Note: this event will NOT execute on DocumentFragment
+					if (root) invokeEvent(root, mountEvent);
+					// #endregion lifecycle after render
+				} else {
+					// If the route callback does not return a Node, we can choose to handle it differently.
+					// For example, if it returns a string, we could render it as HTML or text.
+					// Or if it returns an object, we could pass it to the component as props/state.
+					// For now, we will just log it.
+					console.log("Route callback result is not a Node:", routeCallbackResult)
+				}
+
+				return;
+			}
+
+			// If no route matched, navigate to default route
+			// console.warn(`No route matched for ${newURL}, navigating to default route: ${defaultRoute}`)
+			window.history.pushState(state || {}, "", defaultRoute);
+			this.update(state);
+
+		} catch (/** @type {any} */ e) {
+			// console.error("Router error:", e);
+			window.history.pushState({ message: e.message || e }, "", '/error');
+			this.update({ message: e.message || e });
+		}
+	}
+
+	/**
+	 * Updates the URL path to the specified value.
+	 * This triggers a navigation event to the new path location.
+	 * This is a convenience wrapper for {@link https://developer.mozilla.org/en-US/docs/Web/API/History/pushState|window.history.pushState()}.
+	 *
+	 * @param {string} path
+	 * @param {*} state optional state to pass with the navigation, will be available in the `state` parameter of the `onPopState` event listener
+	 * @example router.go("/info")
+	 * @example router.go("/info", { foo: "bar" })
+	 */
+	go(path, state) {
+		window.history.pushState(state || {}, "", path)
+		this.update(state)
+	}
+
+	/**
+	 * Goes back in the browser history.
+	 * This is a convenience wrapper for {@link https://developer.mozilla.org/en-US/docs/Web/API/History/back|window.history.back()
+	 */
+	back() {
+		window.history.back()
+	}
+}
