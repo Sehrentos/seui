@@ -1,4 +1,4 @@
-import { ns } from "../../seui.js"
+import { ns } from "seui"
 
 const { svg, path } = ns("http://www.w3.org/2000/svg")
 

@@ -1,4 +1,6 @@
-import { tags, router, Observable } from "../../seui.js"
+import { tags } from "seui"
+import Observable from "seui/observable"
+import { router } from "seui/router"
 import Navigation from "../components/Navigation.js"
 import { globalState } from "../state.js"
 

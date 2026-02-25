@@ -1,4 +1,6 @@
-import { tags, State, onceNavigate } from "../../seui.js"
+import { tags } from "seui"
+import { onceNavigate } from "seui/router"
+import State from "seui/state"
 import Navigation from "../components/Navigation.js"
 
 const { a, p, h1, span, button, fragment } = tags

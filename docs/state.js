@@ -1,4 +1,4 @@
-import { Observable } from "../seui.js";
+import Observable from "seui/observable";
 
 /**
  * Note: remember to unsubscribe global observers

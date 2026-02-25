@@ -4,7 +4,13 @@
 	"version": "1.0.0",
 	"description": "SEUI javascript UI library",
 	"type": "module",
-	"main": "seui.js",
+	"main": "index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./observable": "./src/Observable.js",
+		"./router": "./src/Router.js",
+		"./state": "./src/State.js"
+	},
 	"author": "Niko Hyrkäs",
 	"license": "MIT"
 }

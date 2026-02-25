@@ -1,11 +1,11 @@
-import { tags } from "../../seui.js"
+import { tags } from "seui"
 import SampleTimer from "../components/SampleTimer.js"
 import SampleDialog from "../components/SampleDialog.js"
 import SVGWorld from "../components/SVGWorld.js"
 import Navigation from "../components/Navigation.js"
 import SampleTimerObservable from "../components/SampleTimerObservable.js"
 
-const { a, p, h1, ol, li, fragment } = tags
+const { a, p, h1, fragment } = tags
 
 // sample observable component
 const observableTimer = SampleTimerObservable({ count: 0, stopAfter: 5 })
@@ -39,11 +39,6 @@ export default function Home() {
 			a({ href: "#!/observable-proxy" }, "Observable Proxy"),
 		),
 		p("This page will demonstrate the use of the seui library and its components."),
-		p("More examples:",
-			ol(
-				li(a({ href: "/docs/userprofile/" }, "/docs/userprofile/")),
-			)
-		),
 		// this is an observable, so use value here:
 		observableTimer.value,
 		// this returns an HTMLElement:
@@ -59,6 +54,7 @@ export default function Home() {
 					console.log("SampleTimer::stopTimer", { target, timer, count })
 					clearInterval(timer)
 					/** @type {HTMLDialogElement} */
+					// @ts-ignore
 					const dialog = document.querySelector("dialog#home-dialog")
 					if (dialog) dialog.showModal()
 				}

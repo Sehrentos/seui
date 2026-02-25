@@ -51,11 +51,24 @@ over the DOM, leveraging modern browser APIs.
 ---------------
 For now, you can directly import them into your project:
 ```html
-<script type="module" src="./seui.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "seui": "./src/index.js",
+    "seui/observable": "./src/Observable.js",
+    "seui/router": "./src/Router.js",
+    "seui/state": "./src/State.js"
+  }
+}
+</script>
+<script type="module" src="./app.js"></script>
 ```
 ```javascript
 // In your main JavaScript file (e.g., app.js)
-import { tags, router, State, Observable } from './seui.js';
+import { tags } from 'seui';
+import { router } from 'seui/router';
+import Observable from 'seui/observable';
+import State from 'seui/state';
 ```
 
 ## Usage Examples
@@ -65,7 +78,7 @@ import { tags, router, State, Observable } from './seui.js';
 Create and append HTML elements easily.
 
 ```javascript
-import { tags } from './seui.js'
+import { tags } from 'seui'
 const { h1, div, button, fragment } = tags
 
 const App = () => {
@@ -94,7 +107,7 @@ div("Sample element", { ontouchstart: [(e) => console.log(e.type), { passive: tr
 Create SVG elements with proper namespaces.
 
 ```javascript
-import { ns } from "./seui.js"
+import { ns } from "seui"
 
 const { svg, path } = ns("http://www.w3.org/2000/svg")
 
@@ -121,7 +134,9 @@ export default function SVGWorld() {
 Set up routes and navigate through your single-page application.
 
 ```javascript
-import { tags, router, State } from './seui.js';
+import { tags } from 'seui';
+import { router } from 'seui/router';
+import State from 'seui/state';
 
 const { a, p, h1, div, nav, button } = tags;
 
@@ -228,7 +243,7 @@ router.state.update((current) => ({
 Manage simple, isolated reactive values.
 
 ```javascript
-import { Observable } from './seui.js';
+import Observable from 'seui/observable';
 
 const counter = new Observable(0);
 const statusMessage = new Observable('Ready');
@@ -266,7 +281,7 @@ setTimeout(() => {
 Manage complex, nested data structures with automatic change detection.
 
 ```javascript
-import { State } from './seui.js';
+import State from 'seui/state';
 
 const appState = State({
   user: {
@@ -387,7 +402,9 @@ fragment({ // function is passed to tags properties
 Demonstrate the use of tags, routing, observable state and unmount lifecycle event for unbind/unsubscribe.
 
 ```javascript
-import { tags, router, Observable } from "./seui.js"
+import { tags } from 'seui';
+import { router } from 'seui/router';
+import Observable from 'seui/observable';
 
 const { a, b, p, h1, nav, form, span, textarea, button, input, fragment } = tags
 

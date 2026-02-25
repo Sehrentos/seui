@@ -1,4 +1,5 @@
-import { tags, Observable } from "../../seui.js"
+import { tags } from "seui"
+import Observable from "seui/observable";
 
 const { div } = tags
 

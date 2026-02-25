@@ -1,5 +1,6 @@
 // sample app with routing
-import { tags, router } from "../seui.js"
+import { tags } from "seui"
+import { router } from "seui/router"
 import Home from "./pages/Home.js"
 import Info from "./pages/Info.js"
 import Contact from "./pages/Contact.js"
