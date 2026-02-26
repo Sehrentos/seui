@@ -63,9 +63,9 @@ For now, you can directly import them into your project:
 {
   "imports": {
     "seui": "./src/index.js",
-    "seui/observable": "./src/Observable.js",
-    "seui/router": "./src/Router.js",
-    "seui/state": "./src/State.js"
+    "seui/observable": "./src/observable.js",
+    "seui/router": "./src/router.js",
+    "seui/state": "./src/state.js"
   }
 }
 </script>
