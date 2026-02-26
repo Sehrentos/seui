@@ -26,7 +26,7 @@ export default function Navigation(...props) {
 	}
 
 	// disable the current active link by location.hash from elements list
-	const currentHash = location.hash
+	const currentHash = location.hash || "#!/"
 	for (let i = 0; i < elements.length; i++) {
 		if (!(elements[i] instanceof Element)) continue // skip non-Element
 		if (elements[i].href.endsWith(currentHash)) {

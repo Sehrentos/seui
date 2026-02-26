@@ -1,8 +1,7 @@
 import { tags } from "seui"
 import Observable from "seui/observable"
-import { router } from "seui/router"
 import Navigation from "../components/Navigation.js"
-import { globalState } from "../state.js"
+import { globalState, routerState } from "../state.js"
 
 const { a, p, h1, div, span, button } = tags
 
@@ -20,14 +19,14 @@ export default function PubSub() {
 
 	// subscribe to the router state observable
 	// and unsubscribe when leaving the page
-	const unsubscribeRouter = router.state.subscribe(({ newURL, oldURL }) => {
+	const unsubscribeRouter = routerState.subscribe(({ newURL, oldURL }) => {
 		console.log("Route change:", newURL, oldURL)
 		// cleanup listeners
 		if (oldURL.endsWith("#!/pubsub")) { // leaving the current page
 			console.log("PubSub::cleanup listeners")
 			unsubscribeGlobal()
 			unsubscribeCounter()
-			unsubscribeRouter()
+			unsubscribeRouter?.()
 		}
 	})
 

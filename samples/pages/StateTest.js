@@ -1,5 +1,5 @@
 import { tags } from "seui"
-import { onceNavigate } from "seui/router"
+import { HashRouter } from "seui/router"
 import State from "seui/state"
 import Navigation from "../components/Navigation.js"
 
@@ -39,7 +39,7 @@ export default function StateTest() {
 
 	// cleanup routine on route change
 	// this will trigger when the user navigates to another page
-	onceNavigate((e) => {
+	HashRouter.onceNavigate((e) => {
 		// globalState.unsubscribe(globalObserver)
 		// counter.unsubscribe(counterObserver)
 		unsubscribeAllChanges()

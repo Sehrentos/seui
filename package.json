@@ -7,9 +7,9 @@
 	"main": "index.js",
 	"exports": {
 		".": "./src/index.js",
-		"./observable": "./src/Observable.js",
-		"./router": "./src/Router.js",
-		"./state": "./src/State.js"
+		"./observable": "./src/observable.js",
+		"./router": "./src/router.js",
+		"./state": "./src/state.js"
 	},
 	"author": "Niko Hyrkäs",
 	"license": "MIT"

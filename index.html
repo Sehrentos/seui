@@ -5,18 +5,21 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>SEUI JS library</title>
-	<link rel="stylesheet" type="text/css" href="./docs/style.css">
+	<!-- for History API router to use relative paths (./) -->
+	<base href="/" />
+	<link rel="stylesheet" type="text/css" href="./samples/style.css">
 	<script type="importmap">
 	{
 		"imports": {
 			"seui": "./src/index.js",
-			"seui/observable": "./src/Observable.js",
-			"seui/router": "./src/Router.js",
-			"seui/state": "./src/State.js"
+			"seui/observable": "./src/observable.js",
+			"seui/router": "./src/router.js",
+			"seui/state": "./src/state.js"
 		}
 	}
 	</script>
-	<script async src="./docs/index.js" type="module"></script>
+	<script async src="./samples/index.js" type="module"></script>
+	<!-- <script async src="./samples/history-router.js" type="module"></script> -->
 </head>
 
 <body></body>

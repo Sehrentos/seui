@@ -7,11 +7,12 @@ over the DOM, leveraging modern browser APIs.
 1. See live demo page [here](https://sehrentos.github.io/seui/) hosted by the github pages.
 2. Explore the sample source code in the [docs/index.js](docs/index.js).
 3. Try the editable live version on [JSFiddle](https://jsfiddle.net/Sehrentos/bhamrxg9/).
+4. HistoryRouter sample file here [docs/test/history-router.js](docs/test/history-router.js).
 
 ---
 
 > [!WARNING]
-> This is a **demo only**. Expect bugs and unfinished functionality.
+> This is a **demo only** for learning and testing things out. Expect bugs and unfinished functionality.
 
 ## Table of Contents
 -----------------
@@ -24,10 +25,16 @@ over the DOM, leveraging modern browser APIs.
     - [1. Declarative HTML with `tags`](#1-declarative-html-with-tags)
     - [2. Namespaced Tags (e.g., SVG)](#2-namespaced-tags-eg-svg)
     - [3. Client-Side Routing with router](#3-client-side-routing-with-router)
+      - [Navigate to pages and passing optional state data along.](#navigate-to-pages-and-passing-optional-state-data-along)
+      - [Use router state that is observable.](#use-router-state-that-is-observable)
+      - [Get router state data from `router.state` that is Observable.](#get-router-state-data-from-routerstate-that-is-observable)
+      - [Observing router state changes.](#observing-router-state-changes)
+      - [Set new data value to the router state.](#set-new-data-value-to-the-router-state)
     - [4. Reactive State with Observable](#4-reactive-state-with-observable)
     - [5. Deep Reactive State with State](#5-deep-reactive-state-with-state)
     - [6. Custom lifecycle Events](#6-custom-lifecycle-events)
-    - [7. Sample App](#7-sample-app)
+    - [7. Helpers / Utils](#7-helpers--utils)
+    - [8. Sample App](#8-sample-app)
   - [Documentation](#documentation)
   - [Plans](#plans)
   - [Contributing](#contributing)
@@ -37,9 +44,10 @@ over the DOM, leveraging modern browser APIs.
 - Declarative HTML with Tags:
   - Create DOM elements directly in JavaScript using a simple functional API, making your UI structure explicit and composable.
   - Supports standard HTML tags and also provides namespaces for creating SVG and MathML elements.
-- Powerful Client-Side Router:
-  - A single-instance hash-based router for managing application views.
-  - Supports both exact string matches (e.g., `/path`) and flexible regular expression patterns (e.g., `#!/users/(\d+)`).
+- Powerful Client-Side Routers:
+  - `HashRouter` - A hash-based router with `"#!/"` links.
+  - `HistoryRouter` - A History API based router with `"/"` links.
+  - Supports both exact string matches (e.g., `/path`) and patterns (e.g., `/users/:id`).
   - Integrates with component lifecycle for automatic cleanup when routes change.
 - Reactive State Management (Observable):
   - A basic, traditional publish-subscribe pattern for managing single values or simple data streams. Ideal for granular reactivity where explicit updates are desired.
@@ -132,13 +140,16 @@ export default function SVGWorld() {
 ### 3. Client-Side Routing with router
 
 Set up routes and navigate through your single-page application.
+ - HashRouter - use `"#!/"` for links (zero config, should everywhere).
+ - HistoryRouter - use `"/"` for links, but requires server to handle 404 redirect.
 
 ```javascript
 import { tags } from 'seui';
-import { router } from 'seui/router';
+import { HashRouter } from 'seui/router';
 import State from 'seui/state';
 
 const { a, p, h1, div, nav, button } = tags;
+const router = new HashRouter();
 
 const appRoot = document.getElementById('app-root'); // Your main application container
 
@@ -161,12 +172,13 @@ const AboutPage = () => div(
 );
 const UserProfilePage = (userId) => div(h1(`User Profile for ID: ${userId}`));
 
-router.init(appRoot, "/", {
+// update router with paths
+router.setup(appRoot, "/", {
   // Simple string routes
   "/": HomePage,
   "/about": () => AboutPage(),
   // RegExp route with possible match groups
-  "#!/user/(\\d+)": (oldURL, newURL, userId) => {
+  "/user/:userId": (oldURL, newURL, userId) => {
     return UserProfilePage(userId || 'Unknown');
   },
   // Example async/await use
@@ -187,13 +199,16 @@ router.init(appRoot, "/", {
     return div("Okay, here is user info...")
   },
   // Error route fallback
-  "#!/error/(.+)": (oldURL, newURL, message) => {
+  "/error/:message": (oldURL, newURL, message) => {
     return div(h1('Error!'), p(`Page not found or error: ${decodeURIComponent(message)}`));
   },
 });
 ```
 
-Navigate to pages and passing optional data along.
+#### Navigate to pages and passing optional state data along.
+
+> [!NOTE]
+> If you want to pass state data, you need to set `router.state` that os Observable object (see next samples below).
 
 ```javascript
 router.go("#!/home")
@@ -208,33 +223,48 @@ a({ href: "#!/home" }, "Home")
 location.href = "#!/home"
 ```
 
-Get router data from `router.state` that is Observable.
+#### Use router state that is observable.
+
+> [!NOTE]
+> By default the `router.state` is `undefined`.
+
 ```javascript
-// for example, you can read this in
-// components oncreate or onmount lifecycles
-// when page is created or navigated to
-const routerData = router.state.value.data
+// initial config:
+// create observable for the router, you can save this to a different file to get easier access to it later
+const state = new Observable({ newURL: "", oldURL: "", data: undefined })
+
+// pass observable state object to the router
+router.setup(document.body, "/", { /* ... */ }, state) // at initialization / setup
+// or directly
+router.state = state
+
+// reading the state directly (without router ref)
+const data = state.value.data || "no data"
 ```
 
-Observe router state changes.
+#### Get router state data from `router.state` that is Observable.
+
 ```javascript
-router.state.subscribe(({ newURL, oldURL, data }) => {
+// example, you can read router state object in
+// components "oncreate" or "onmount" lifecycles
+// when page is created or navigated to
+const routerData = router.state?.value?.data || "no data"
+```
+
+#### Observing router state changes.
+
+```javascript
+router.state?.subscribe(({ newURL, oldURL, data }) => {
   console.log(`Route change from: ${oldURL} to: ${newURL} with data:`, data)
 })
 ```
 
-Set or "reset" the data from the router state.
+#### Set new data value to the router state.
+
 ```javascript
-// reset data
-router.setData(null)
-
-// set new data
-router.setData({ "value": "123" })
-
-// this is equivalent to:
-router.state.update((current) => ({
-  ...current,
-  data: { "value": "123" }
+router.state?.update((current) => ({
+  ...current, // merge the current object
+  data: { "value": "123" } // override data value
 }))
 ```
 
@@ -397,17 +427,40 @@ fragment({ // function is passed to tags properties
 }, "Here is dummy page")
 ```
 
-### 7. Sample App
+### 7. Helpers / Utils
+
+Add extra styles
+```js
+import { addStyle } from "seui"
+// add style element
+addStyle(`
+    body {
+        font-size: 1em;
+    }
+`)
+// add link elements
+addStyle(
+    { rel: "icon" href: "favicon.ico" },
+    { rel: "manifest" href: "manifest.json" },
+    {
+        href: "./some-styles.css",
+        rel: "stylesheet",
+        type: "text/css"
+    }
+)
+```
+
+### 8. Sample App
 
 Demonstrate the use of tags, routing, observable state and unmount lifecycle event for unbind/unsubscribe.
 
 ```javascript
 import { tags } from 'seui';
-import { router } from 'seui/router';
+import { HashRouter } from 'seui/router';
 import Observable from 'seui/observable';
 
 const { a, b, p, h1, nav, form, span, textarea, button, input, fragment } = tags
-
+const router = new HashRouter();
 // global state counter
 const counter = new Observable(0)
 
@@ -468,14 +521,14 @@ function Contact() {
   )
 }
 
-// initialize the app using router
+// update the app router
 // this will handle the routing based on the URL hash
 // and render the corresponding page
-router.init(document.body, "/", {
+router.setup(document.body, "/", {
   "/": Home, // also the default route
   "/contact": Contact,
   // sample error route
-  "#!/error/(.+)": (oldURL, newURL, message) => {
+  "/error/:message": (oldURL, newURL, message) => {
     console.log(`RouteError from ${oldURL} to ${newURL} with ${message}`)
     return fragment(
       tags.div("Error! You have navigated to the error page."),
@@ -483,7 +536,7 @@ router.init(document.body, "/", {
     )
   },
   // optional. sample error page
-  // "#!/error/(.+)": ErrorPage,
+  // "/error/:msg": ErrorPage,
 })
 ```
 
@@ -497,7 +550,7 @@ TODO: improve the documentation.
 4. Other improvements overall
 
 ## Contributing
-All contributions are welcome.
+This is a demo/test project, so nothing serious here.
 
 ## License
 SEUI is licensed under the [MIT License](LICENSE).
