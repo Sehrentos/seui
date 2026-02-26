@@ -526,13 +526,13 @@ export class HistoryRouter {
 	 * This is a convenience wrapper for {@link https://developer.mozilla.org/en-US/docs/Web/API/History/pushState|window.history.pushState()}.
 	 *
 	 * @param {string} path
-	 * @param {*} state optional state to pass with the navigation, will be available in the `state` parameter of the `onPopState` event listener
+	 * @param {*} [data] optional data to pass with the navigation
 	 * @example router.go("/info")
 	 * @example router.go("/info", { foo: "bar" })
 	 */
-	go(path, state) {
-		window.history.pushState(state, "", path)
-		this.update(state)
+	go(path, data) {
+		window.history.pushState(data, "", path)
+		this.update(data)
 	}
 
 	/**

@@ -191,7 +191,7 @@ router.setup(appRoot, "/", {
       return div(
         {
           onmount: () => {
-            setTimeout(() => router.go("/"), 1500)
+            setTimeout(() => router.go("#!/"), 1500)
           }
         },
         "You are not logged in.")

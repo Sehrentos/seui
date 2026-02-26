@@ -45,8 +45,8 @@
  *
  * @template T The type of the target object being observed.
  * @param {T} target Target to observe.
- * @param {boolean} [isAsync=false] Invoke the callbacks as asynchronous or synchronous.
- * @returns {T extends object ? T & {subscribe: SubscribeMethod, unsubscribe: UnsubscribeMethod} : {value: T} & {subscribe: SubscribeMethod, unsubscribe: UnsubscribeMethod}} The proxied target with added subscribe/unsubscribe methods.
+ * @param {boolean} [isAsync=false] Invoke the callbacks as asynchronous (queueMicrotask) or synchronous.
+ * @returns {T extends object ? T & {subscribe: SubscribeMethod, unsubscribe: UnsubscribeMethod, unsubscribeAll:UnsubscribeFunction } : {value: T} & {subscribe: SubscribeMethod, unsubscribe: UnsubscribeMethod, unsubscribeAll:UnsubscribeFunction}} The proxied target with added subscribe/unsubscribe methods.
  */
 export function State(target, isAsync = false) {
 	// Stores callbacks for ANY change to the observed object.
@@ -120,12 +120,18 @@ export function State(target, isAsync = false) {
 					}
 				};
 			}
+			if (key === 'unsubscribeAll') {
+				return () => {
+					subscribers.clear();
+					propertySubscribers.clear();
+				};
+			}
 			//#endregion Subscription methods
 
 			const prop = currentTarget[key];
 
 			// return if property not found (and not a subscription method)
-			if (prop === undefined && key !== 'subscribe' && key !== 'unsubscribe') return;
+			if (prop === undefined/* && key !== 'subscribe' && key !== 'unsubscribe'*/) return;
 			if (prop === null) return null;
 
 			// set value as proxy if object and not already proxied
@@ -136,6 +142,7 @@ export function State(target, isAsync = false) {
 			return currentTarget[key];
 		},
 		set(currentTarget, key, newValue, receiver) {
+			if (key === 'subscribe' || key === 'unsubscribe' || key === 'unsubscribeAll') return false;
 			const oldValue = currentTarget[key];
 			const result = Reflect.set(currentTarget, key, newValue, receiver); // Perform the actual set
 
@@ -161,7 +168,7 @@ export function State(target, isAsync = false) {
 		case "number":
 		case "boolean":
 		case "bigint":
-		case "symbol": // primitive types
+		case "symbol":
 			return new Proxy({ value: target }, handler);
 
 		case "object":
@@ -169,11 +176,10 @@ export function State(target, isAsync = false) {
 				target instanceof String ||
 				target instanceof Boolean ||
 				target instanceof Number) {
-				// primitive types
 				return new Proxy({ value: target }, handler);
 			}
 			if (target instanceof Set) throw Error(`State cannot observe "Set" type`);
-			if (target instanceof Map) throw Error(`State cannot observe "Map" type`); // Also add Map here
+			if (target instanceof Map) throw Error(`State cannot observe "Map" type`);
 			return new Proxy(target, handler);
 
 		default:
