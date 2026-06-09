@@ -30,11 +30,12 @@ over the DOM, leveraging modern browser APIs.
       - [Get router state data from `router.state` that is Observable.](#get-router-state-data-from-routerstate-that-is-observable)
       - [Observing router state changes.](#observing-router-state-changes)
       - [Set new data value to the router state.](#set-new-data-value-to-the-router-state)
-    - [4. Reactive State with Observable](#4-reactive-state-with-observable)
-    - [5. Deep Reactive State with State](#5-deep-reactive-state-with-state)
-    - [6. Custom lifecycle Events](#6-custom-lifecycle-events)
-    - [7. Helpers / Utils](#7-helpers--utils)
-    - [8. Sample App](#8-sample-app)
+    - [4. Reactive State with Signal](#4-reactive-state-with-signal)
+    - [5. Reactive State with Observable](#5-reactive-state-with-observable)
+    - [6. Deep Reactive State with State](#6-deep-reactive-state-with-state)
+    - [7. Custom lifecycle Events](#7-custom-lifecycle-events)
+    - [8. Helpers / Utils](#8-helpers--utils)
+    - [9. Sample App](#9-sample-app)
   - [Documentation](#documentation)
   - [Plans](#plans)
   - [Contributing](#contributing)
@@ -268,7 +269,20 @@ router.state?.update((current) => ({
 }))
 ```
 
-### 4. Reactive State with Observable
+### 4. Reactive State with Signal
+
+```javascript
+import { signal, effect, computed } from "seui"
+
+const count = signal(0)
+
+// when count is even, color is blue, otherwise red
+const color = computed(() => count.value % 2 === 0 ? "blue" : "red")
+
+effect(() => console.log("Count changed:", count.value))
+```
+
+### 5. Reactive State with Observable
 
 Manage simple, isolated reactive values.
 
@@ -306,7 +320,7 @@ setTimeout(() => {
 }, 2000);
 ```
 
-### 5. Deep Reactive State with State
+### 6. Deep Reactive State with State
 
 Manage complex, nested data structures with automatic change detection.
 
@@ -356,46 +370,7 @@ removeUserLastNameListener(); // Unsubscribe it
 appState.user.lastName = 'Jones'; // This listener does NOT fire anymore
 ```
 
-State helper example:
-```javascript
-/**
- * Helper that creates a span element that automatically updates its text content
- * based on the specified property of the given reactive state.
- *
- * @param {Object} state - The reactive state object to subscribe to.
- * @param {string} propName - The property name within the state to observe.
- * @returns {HTMLElement} A span element displaying the current value of the state property.
- *
- * @example
- * const state = State({ counter: 0 }, true)
- * // ...
- * div(
- *   ReactiveSpan(state, "counter"),
- *   button({ onclick: () => state.counter++ }, "Increment Counter"),
- * )
- */
-function ReactiveSpan(state, propName) {
-  let unsubscribe
-
-  const textSpan = tags.span(
-    {
-      onmount: (e) => {
-        unsubscribe = state.subscribe(() => {
-          textSpan.textContent = String(state[propName])
-        })
-      },
-      onunmount: () => {
-        if (typeof unsubscribe === "function") unsubscribe()
-      },
-    },
-    state[propName]
-  )
-
-  return textSpan
-}
-```
-
-### 6. Custom lifecycle Events
+### 7. Custom lifecycle Events
 
 Custom lifecycle events or methods used by the library.
 
@@ -427,7 +402,7 @@ fragment({ // function is passed to tags properties
 }, "Here is dummy page")
 ```
 
-### 7. Helpers / Utils
+### 8. Helpers / Utils
 
 Add extra styles
 ```js
@@ -450,7 +425,7 @@ addStyle(
 )
 ```
 
-### 8. Sample App
+### 9. Sample App
 
 Demonstrate the use of tags, routing, observable state and unmount lifecycle event for unbind/unsubscribe.
 

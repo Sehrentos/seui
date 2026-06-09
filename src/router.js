@@ -1,5 +1,5 @@
 /**
- * @typedef {{[key:string]:(prev:string,now:string,...params:string[])=>any}} TRoute a route object
+ * @typedef {{[key:string]:(prev:string, now:string,  ...params:string[])=>any}} TRouteParams a route object
  * @typedef {import("./observable").Observable<{ newURL: string, oldURL: string, data: any }>} TObservableState
  */
 
@@ -8,70 +8,6 @@
  * @param {string} path
  */
 const pathToRegex = (path) => new RegExp("^" + path.replace(/\//g, "\\/").replace(/:\w+/g, "([^/]+)") + "$");
-
-/**
- * Dispatches a custom event on the given target element and all its child elements.
- *
- * This function traverses through the DOM tree starting from the given element,
- * and dispatches the given event on every traversed element.
- *
- * @param {HTMLElement|Element} target - The DOM element on which to dispatch the event.
- * @param {CustomEvent} event - The event to dispatch.
- */
-const invokeEvent = (target, event) => {
-	if (target == null) return
-	if (target.children.length > 0) {
-		for (const child of target.children) {
-			invokeEvent(child, event)
-		}
-	}
-	target.dispatchEvent(event)
-}
-
-/**
- * Removes an event listener from an element and removes it from the element's
- * custom `_listeners` array.
- * @param {Element} element
- * @param {string} type
- * @param {(this: Element, ev: Event) => any} handler
- * @param {boolean | AddEventListenerOptions} [options] Optional. Options to pass eg. `{ capture: true }`
- */
-const removeListener = (element, type, handler, options) => {
-	if (element['_listeners'] == null) return
-	for (let i = 0; i < element['_listeners'].length; i++) {
-		const listener = element['_listeners'][i]
-		if (listener.key === type && listener.handler === handler && listener.options === options) {
-			element['_listeners'].splice(i, 1)
-			element.removeEventListener(type, handler, options)
-			return
-		}
-	}
-}
-
-/**
- * Recursively removes all event listeners from an element and its child elements.
- *
- * This function traverses through the DOM tree starting from the given element,
- * and removes all event listeners stored in the element's `_listeners` property.
- * It first processes all child elements, ensuring that every descendant element
- * is also cleared of its event listeners.
- *
- * @param {HTMLElement|Element} element - The DOM element from which to remove event listeners.
- */
-const removeListeners = (element) => {
-	if (element == null) return
-	if (element.children.length > 0) {
-		for (const child of element.children) {
-			removeListeners(child)
-		}
-	}
-	if (element['_listeners'] != null) {
-		for (const listener of element['_listeners']) {
-			element.removeEventListener(listener.key, listener.handler, listener.options)
-		}
-		element['_listeners'] = undefined
-	}
-}
 
 /**
  * The HashRouter class represents a client-side router that uses the URL hash to manage navigation.
@@ -92,7 +28,7 @@ export class HashRouter {
 	 *
 	 * @param {HTMLElement|null} [root] root element
 	 * @param {string} [defaultRoute] default route
-	 * @param {TRoute} [routes] routes
+	 * @param {TRouteParams} [routes] routes
 	 * @param {TObservableState} [state] optional. pass observer for router to update
 	 *
 	 * @example
@@ -111,7 +47,7 @@ export class HashRouter {
 		this.root = root
 		/** @type {string} */
 		this.defaultRoute = defaultRoute || "/"
-		/** @type {TRoute} */
+		/** @type {TRouteParams} */
 		this.routes = routes || {}
 		/** @type {string} */
 		this.oldURL = window.location.hash || "/"
@@ -128,11 +64,11 @@ export class HashRouter {
 	 *
 	 * @param {HTMLElement} root root element
 	 * @param {string} defaultRoute default route
-	 * @param {TRoute} routes route url can callback Object
+	 * @param {TRouteParams} routes route url can callback Object
 	 * @param {TObservableState} [state] optional. pass observer for router to update
 	 *
 	 * @example
-	 * import { HashRouter } from "./seui/router"
+	 * import { HashRouter } from "seui/router"
 	 * const router = new HashRouter()
 	 * router.setup(document.body, "/", {
 	 *   "/": Home, // also the default route
@@ -177,6 +113,7 @@ export class HashRouter {
 		const oldURL = (this.oldURL || "#!/").replace("#!/", "/");
 		this.oldURL = newURL;
 		try {
+			/** @type {Promise<TRouteParams>|undefined} */
 			let routeCallbackPromise;
 
 			for (const key in routes) {
@@ -207,13 +144,13 @@ export class HashRouter {
 			const routeCallbackResult = await routeCallbackPromise;
 
 			// lifecycle before render
-			this.beforeRender(routeCallbackResult);
+			// this.beforeRender(routeCallbackResult);
 
 			// render the new view based on the route callback result
 			this.render(routeCallbackResult);
 
 			// lifecycle after render
-			this.afterRender(routeCallbackResult);
+			// this.afterRender(routeCallbackResult);
 
 			// set the router state and signal update to subscribers
 			this.state?.update((current) => ({
@@ -277,59 +214,6 @@ export class HashRouter {
 	}
 
 	/**
-	 * Before render lifecycle method to clean up the previous route's component and events.
-	 * @param {*} view - The next component/node to render after this method is called.
-	 */
-	beforeRender(view) {
-		if (this._activeComponent == null) return;
-		// dispatch custom lifecycle event
-		const unmountEvent = new CustomEvent('unmount', {
-			bubbles: false,
-			cancelable: true,
-			detail: {
-				component: this._activeComponent
-			}
-		});
-		// Note: this event will execute on DocumentFragment
-		if (this._activeComponent instanceof DocumentFragment) {
-			this._activeComponent.dispatchEvent(unmountEvent);
-		}
-		// dispatch lifecycle event on every child element
-		// Note: this event will NOT execute on DocumentFragment
-		if (this.root) {
-			invokeEvent(this.root, unmountEvent);
-			// remove all events associated with the component
-			removeListeners(this.root);
-		}
-	}
-
-	/**
-	 * Lifecycle method after render. Dispatches a "mount" event on the active component
-	 * and its children, and stores the current component instance for later use.
-	 * @param {*} view - The rendered component/node.
-	 */
-	afterRender(view) {
-		if (this.root == null || view == null) return;
-		// store the current component instance for later use
-		this._activeComponent = view;
-		// dispatch lifecycle event onmount
-		const mountEvent = new CustomEvent('mount', {
-			bubbles: false,
-			cancelable: true,
-			detail: {
-				component: this._activeComponent
-			}
-		})
-		// Note: this will execute on DocumentFragment
-		if (view instanceof DocumentFragment) {
-			view.dispatchEvent(mountEvent);
-		}
-		// dispatch lifecycle event onmount on every child element
-		// Note: this event will NOT execute on DocumentFragment
-		invokeEvent(this.root, mountEvent);
-	}
-
-	/**
 	 * Handle rendering of the new route based on the result from the route callback.
 	 * If the result is a Node, it will be rendered into the root element.
 	 * If the result is not a Node, it will be logged as a warning.
@@ -383,7 +267,7 @@ export class HistoryRouter {
 	 *
 	 * @param {HTMLElement} [root] root element
 	 * @param {string} [defaultRoute] default route
-	 * @param {TRoute} [routes] route url can callback Object
+	 * @param {TRouteParams} [routes] route url can callback Object
 	 * @param {TObservableState} [state] optional. pass observer for router to update
 	 *
 	 * @example
@@ -407,7 +291,7 @@ export class HistoryRouter {
 		this.root = root
 		/** @type {string} */
 		this.defaultRoute = defaultRoute || "/"
-		/** @type {TRoute} */
+		/** @type {TRouteParams} */
 		this.routes = routes || {}
 		/** @type {TObservableState|undefined} */
 		this.state = state
@@ -423,7 +307,7 @@ export class HistoryRouter {
 	 * Set up the router with new parameters.
 	 * @param {HTMLElement} root root element
 	 * @param {string} defaultRoute default route
-	 * @param {TRoute} routes route url can callback Object
+	 * @param {TRouteParams} routes route url can callback Object
 	 * @param {TObservableState} [state] optional. pass observer for router to update
 	 */
 	setup(root, defaultRoute, routes, state) {
@@ -489,13 +373,13 @@ export class HistoryRouter {
 			const routeCallbackResult = await routeCallbackPromise;
 
 			// lifecycle before render
-			this.beforeRender(routeCallbackResult);
+			// this.beforeRender(routeCallbackResult);
 
 			// render the new view based on the route callback result
 			this.render(routeCallbackResult);
 
 			// lifecycle after render
-			this.afterRender(routeCallbackResult);
+			// this.afterRender(routeCallbackResult);
 
 			// update URL without reloading the page
 			// prevent unnecessary pushState if URL is already correct
@@ -559,59 +443,6 @@ export class HistoryRouter {
 		if (typeof this._onLoad === "function") {
 			window.removeEventListener('load', this._onLoad, false)
 		}
-	}
-
-	/**
-	 * Before render lifecycle method to clean up the previous route's component and events.
-	 * @param {*} view - The next component/node to render after this method is called.
-	 */
-	beforeRender(view) {
-		if (this._activeComponent == null) return;
-		// dispatch custom lifecycle event
-		const unmountEvent = new CustomEvent('unmount', {
-			bubbles: false,
-			cancelable: true,
-			detail: {
-				component: this._activeComponent
-			}
-		});
-		// Note: this event will execute on DocumentFragment
-		if (this._activeComponent instanceof DocumentFragment) {
-			this._activeComponent.dispatchEvent(unmountEvent);
-		}
-		// dispatch lifecycle event on every child element
-		// Note: this event will NOT execute on DocumentFragment
-		if (this.root) {
-			invokeEvent(this.root, unmountEvent);
-			// remove all events associated with the component
-			removeListeners(this.root);
-		}
-	}
-
-	/**
-	 * Lifecycle method after render. Dispatches a "mount" event on the active component
-	 * and its children, and stores the current component instance for later use.
-	 * @param {*} view - The rendered component/node.
-	 */
-	afterRender(view) {
-		if (this.root == null || view == null) return;
-		// store the current component instance for later use
-		this._activeComponent = view;
-		// dispatch lifecycle event onmount
-		const mountEvent = new CustomEvent('mount', {
-			bubbles: false,
-			cancelable: true,
-			detail: {
-				component: this._activeComponent
-			}
-		})
-		// Note: this will execute on DocumentFragment
-		if (view instanceof DocumentFragment) {
-			view.dispatchEvent(mountEvent);
-		}
-		// dispatch lifecycle event onmount on every child element
-		// Note: this event will NOT execute on DocumentFragment
-		invokeEvent(this.root, mountEvent);
 	}
 
 	/**
