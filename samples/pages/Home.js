@@ -12,21 +12,16 @@ const observableTimer = SampleTimerObservable({ count: 0, stopAfter: 5 })
 
 export default function Home() {
 	return fragment(
-		{ // sample lifecycle events
-			oncreate: (e) => {
-				// lifecycle event when the element is created
-				console.log("Home lifecycle:", e.type)
-			},
-			onmount: (e) => {
-				// lifecycle event when the element is mounted
-				console.log("Home lifecycle:", e.type)
-			},
-			onunmount: (e) => {
-				// lifecycle event when the element is unmounted
-				console.log("Home lifecycle:", e.type)
-			},
+		{
+			oncreate: (e) => console.log("Home lifecycle (fragment):", e.type),
+			onmount: (e) => console.log("Home lifecycle (fragment):", e.type),
+			onunmount: (e) => console.log("Home lifecycle (fragment):", e.type),
 		},
-		h1(SVGWorld(), "SEUI Demo"),
+		h1({
+			oncreate: (e) => console.log("Home lifecycle (h1):", e.type),
+			onmount: (e) => console.log("Home lifecycle (h1):", e.type),
+			onunmount: (e) => console.log("Home lifecycle (h1):", e.type),
+		}, SVGWorld(), "SEUI Demo"),
 		Navigation(
 			a({ href: "#!/" }, "Home"),
 			a({ href: "#!/info" }, "Info"),

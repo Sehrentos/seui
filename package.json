@@ -12,5 +12,9 @@
 		"./state": "./src/state.js"
 	},
 	"author": "Niko Hyrkäs",
-	"license": "MIT"
+	"license": "MIT",
+	"scripts": {
+		"serve:samples": "dev-server --port=3000 --host=localhost",
+		"serve:web-app": "dev-server --port=3000 --host=localhost --path=./samples/web-app:/ --path=./src:/src"
+	}
 }
