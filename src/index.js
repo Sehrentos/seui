@@ -168,11 +168,10 @@ export function batch(fn) {
 //#region UI
 /**
  * @typedef {HTMLElementTagNameMap & { "fragment": DocumentFragment, "text": Text, "html": HTMLElement, "math": MathMLElement, "svg": SVGElement, "path": SVGPathElement, "circle": SVGCircleElement } & {[key: string]: HTMLElement} } HTMLElementTags
- * @typedef {{ [K in keyof HTMLElementTags]: (...UIProps) => HTMLElementTags[K] }} TagsProxy a proxy object for HTML tags
- *
+ * @typedef {{ [K in keyof HTMLElementTags]: (...arg0: UIProps) => HTMLElementTags[K] }} TagsProxy a proxy object for HTML tags
  * @typedef {Array<string|number|boolean|bigint|Node|Element|HTMLElement|LifecycleMethods|UIAttributes>} UIProps
  * @typedef {{[key:string]:any}} UIAttributes
- * @typedef {(e:CustomEvent & { target: HTMLElement&{ _listeners: {key:string,handler:()=>any}[] } })=>any} LifecycleCallback
+ * @typedef {EventListenerOrEventListenerObject | [EventListenerOrEventListenerObject, boolean | AddEventListenerOptions]} LifecycleCallback
  * @typedef {Object} LifecycleMethods
  * @prop {LifecycleCallback} oncreate a callback to be invoked when the element is created
  * @prop {LifecycleCallback} onmount a callback to be invoked when the element is mounted
