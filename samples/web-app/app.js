@@ -4,7 +4,7 @@ import { LoginButton } from "./component/Login.js"
 import { UserView, UsersView } from "./component/User.js"
 import state from './context/app.js'
 
-const { fragment, pre, span, button, div, h1, p, text } = tags
+const { fragment, pre, button, h1, p, text } = tags
 
 // optional.
 // import { addStyle } from "seui"

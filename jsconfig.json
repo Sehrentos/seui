@@ -4,14 +4,29 @@
 		"checkJs": true,
 		"strict": true,
 		"noEmit": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"allowUnusedLabels": false,
+		"noUncheckedSideEffectImports": true,
+		"noFallthroughCasesInSwitch": true,
+		"allowUnreachableCode": false,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"erasableSyntaxOnly": true,
+		"noImplicitOverride": true,
+		"noImplicitAny": false,
 		"module": "Preserve",
 		"target": "ESNext",
 		"moduleResolution": "bundler",
-		"noImplicitAny": false,
 		"resolveJsonModule": false,
 		"typeRoots": [
 			"./node_modules/@types"
-		]
+		],
+		"paths": {
+			"@/*": [
+				"./src/*"
+			]
+		}
 	},
 	"exclude": [
 		"node_modules"

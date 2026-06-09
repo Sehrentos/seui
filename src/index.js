@@ -167,7 +167,9 @@ export function batch(fn) {
 
 //#region UI
 /**
- * @typedef {{[key:string]:(...props: UIProps)=>HTMLElement}} TagsProxy a proxy object for HTML tags
+ * @typedef {HTMLElementTagNameMap & { "fragment": DocumentFragment, "text": Text, "html": HTMLElement, "math": MathMLElement, "svg": SVGElement, "path": SVGPathElement, "circle": SVGCircleElement } & {[key: string]: HTMLElement} } HTMLElementTags
+ * @typedef {{ [K in keyof HTMLElementTags]: (...UIProps) => HTMLElementTags[K] }} TagsProxy a proxy object for HTML tags
+ *
  * @typedef {Array<string|number|boolean|bigint|Node|Element|HTMLElement|LifecycleMethods|UIAttributes>} UIProps
  * @typedef {{[key:string]:any}} UIAttributes
  * @typedef {(e:CustomEvent & { target: HTMLElement&{ _listeners: {key:string,handler:()=>any}[] } })=>any} LifecycleCallback
@@ -384,7 +386,9 @@ const observer = new MutationObserver((mutations) => {
 })
 
 // Start watching the whole document
-observer.observe(document.body, { childList: true, subtree: true })
+window.addEventListener('DOMContentLoaded', () => {
+	observer.observe(document.body, { childList: true, subtree: true })
+});
 
 //#endregion MEMORY / CLEANUP
 
@@ -394,8 +398,9 @@ observer.observe(document.body, { childList: true, subtree: true })
  * const { div, h1, p } = tags
  * div(h1("world"), p("world"), { style: { color: 'red' } })
  *
- * @type {TagsProxy} a proxy object for HTML tags
+ * @type {TagsProxy}
  */
+//@ts-ignore
 export const tags = new Proxy({}, {
 	get(target, prop, receiver) {
 		return (...children) => {
@@ -410,13 +415,14 @@ export const tags = new Proxy({}, {
 /**
  * create HTML tag with namespace URI and qualified name
  * @param {string} namespaceURI A string that specifies the `namespaceURI` to associate with the element.
- * @returns {TagsProxy} A function that creates an HTML element with the specified tag and namespace URI.
+ * @type {(namespaceURI: string) => TagsProxy}
  * @example
  * const { div } = ns("http://www.w3.org/1999/xhtml")
  * @example
  * const { svg, path } = ns("http://www.w3.org/2000/svg")
  * const MyComponent = () => svg({ width: 100, height: 100 }, path({ d: "M0 0 L100 0 L100 100 L0 100 Z" }))
  */
+//@ts-ignore
 export const ns = (namespaceURI) => new Proxy({}, {
 	get(target, prop, receiver) {
 		return (...children) => {
@@ -460,7 +466,9 @@ export const addStyle = (...style) => {
 		} else {
 			const linkElement = document.createElement("link")
 			for (const key in s) {
-				linkElement.setAttribute(key, s[key])
+				if (s[key] !== undefined) {
+					linkElement.setAttribute(key, s[key])
+				}
 			}
 			fragment.appendChild(linkElement)
 		}
