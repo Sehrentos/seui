@@ -385,9 +385,7 @@ const observer = new MutationObserver((mutations) => {
 })
 
 // Start watching the whole document
-window.addEventListener('DOMContentLoaded', () => {
-	observer.observe(document.body, { childList: true, subtree: true })
-});
+observer.observe(document.body, { childList: true, subtree: true })
 
 //#endregion MEMORY / CLEANUP
 

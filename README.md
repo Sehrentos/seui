@@ -5,9 +5,9 @@ of a full-blown framework. It focuses on composability and direct control
 over the DOM, leveraging modern browser APIs.
 
 1. See live demo page [here](https://sehrentos.github.io/seui/) hosted by the github pages.
-2. Explore the sample source code in the [docs/index.js](docs/index.js).
+2. Explore the sample source code in the [samples/index.js](samples/index.js).
 3. Try the editable live version on [JSFiddle](https://jsfiddle.net/Sehrentos/bhamrxg9/).
-4. HistoryRouter sample file here [docs/test/history-router.js](docs/test/history-router.js).
+4. HistoryRouter sample file here [samples/history-router.js](samples/history-router.js).
 
 ---
 

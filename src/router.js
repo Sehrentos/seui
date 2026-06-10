@@ -101,8 +101,8 @@ export class HashRouter {
 	/**
 	 * Update the router state based on the current URL.
 	 * Call the appropriate route callback and updates the UI accordingly.
-	 * Call the lifecycle methods `onunmount` before the route update.
-	 * Call the lifecycle methods `onmount` after the route update.
+	 * Call the lifecycle methods `onunmount` before the route update (moved to MutationObserver).
+	 * Call the lifecycle methods `onmount` after the route update (moved to MutationObserver).
 	 *
 	 * @param {*} [state] - optional. The new state object.
 	 * @returns {Promise<void>} A promise that resolves when the route update is complete.
@@ -120,7 +120,7 @@ export class HashRouter {
 				const regExp = pathToRegex(key);
 				const match = newURL.match(regExp);
 
-				if (match == null) continue;
+				if (match == null || routes[key] == null) continue;
 
 				// promisify the route callback in case it's not already a promise
 				// call the route callback with regex groups as parameters
@@ -331,8 +331,8 @@ export class HistoryRouter {
 	/**
 	 * Update the router state based on the current URL.
 	 * Call the appropriate route callback and updates the UI accordingly.
-	 * Call the lifecycle methods `onunmount` before the route update.
-	 * Call the lifecycle methods `onmount` after the route update.
+	 * Call the lifecycle methods `onunmount` before the route update (moved to MutationObserver).
+	 * Call the lifecycle methods `onmount` after the route update (moved to MutationObserver).
 	 * @param {any} [state]
 	 */
 	async update(state) {
@@ -348,7 +348,7 @@ export class HistoryRouter {
 				const regExp = pathToRegex(key);
 				const match = newURL.match(regExp);
 
-				if (match == null) continue;
+				if (match == null || routes[key] == null) continue;
 
 				// promisify the route callback in case it's not already a promise
 				// call the route callback with regex groups as parameters
