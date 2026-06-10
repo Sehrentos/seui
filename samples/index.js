@@ -22,6 +22,7 @@ const router = new HashRouter(document.body, "/", {
 	"/event-driven-observer": MyReactiveComponent, // event driven observer sample
 	"/observer-pattern": MyReactiveComponentWithObserver, // observable sample
 	"/observable-proxy": MyReactiveComponentWithProxy, // proxy sample
+	"/scanner": () => import("./pages/Scanner.js").then(module => module.default()),
 	// "/sample/:value": (prev, now, value) => { // uses RegExp search
 	// 	console.log(`3. Navigated from ${prev} to ${now} with ${value}`)
 	// 	document.body.replaceChildren(tags.div("Hello! You have navigated to the sample page."))

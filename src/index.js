@@ -1,4 +1,5 @@
 //#region signal
+const SIGNAL = "__signal__"
 let activeEffect
 let batching = false
 const dirtyEffects = new Set()
@@ -7,7 +8,7 @@ const dirtyEffects = new Set()
  * @template T
  * @typedef {Object} Signal
  * @property {T} value - The current value of the signal. Can be read and written.
- * @property {0} __signal__ - A marker property to identify signal objects.
+ * @property {0|1} __signal__ - A marker property to identify signal or computed objects.
  */
 
 /**
@@ -22,7 +23,7 @@ const dirtyEffects = new Set()
 export const signal = (value) => {
 	const subscribers = new Set()
 	return {
-		__signal__: 0, // to detect signal objects
+		[SIGNAL]: 0, // to detect signal objects
 		get value() {
 			// console.log('\x1b[32m[signal] read (1):\x1b[0m', value, subscribers.size, activeEffect)
 			if (activeEffect) {
@@ -48,11 +49,24 @@ export const signal = (value) => {
 }
 
 /**
+ * Cleans up the dependencies of an effect object.
+ * This function is used internally by the effect API to clean up
+ * after an effect has been run.
+ * @param {Object} effectObj - The effect object to clean up.
+ */
+function cleanup(effectObj) {
+	for (const subSet of effectObj.deps) {
+		subSet.delete(effectObj)
+	}
+	effectObj.deps.clear()
+}
+
+/**
  * Creates an effect object.
  * An effect is a reactive object that can be read and written.
  * When an effect is written to, all effects subscribed to it will be re-run.
  * Effects are used to manage complex, nested reactive data structures.
- * @param {()=>void} fn The function to be executed when the effect is re-run.
+ * @param {()=>any} fn The function to be executed when the effect is re-run.
  * @returns {()=>void} A function that, when called, will manually dispose of the effect object.
  */
 export const effect = (fn) => {
@@ -82,6 +96,17 @@ export const effect = (fn) => {
  * @template T
  * @param {()=>T} fn The function to be executed when the computed's value is requested.
  * @returns {Signal<T>} A reactive object with a getter function.
+ * @example
+ * const count = signal(0)
+ * const color = computed(() => count.value % 2 === 0 ? "blue" : "red")
+ * div(p(`Signal counter:`, count), button("Increment", {
+ * 		onclick: () => (count.value++),
+ * 		style: { color: color } // Computed signal drives the style
+ * }))
+ * @example
+ * const barcodes = signal([])
+ * const barcodeElements = computed(() => barcodes.value.map((text) => li(text)))
+ * ol(barcodeElements)
  */
 export const computed = (fn) => {
 	let cachedValue
@@ -103,7 +128,7 @@ export const computed = (fn) => {
 	const subscribers = new Set()
 
 	return {
-		__signal__: 0,
+		[SIGNAL]: 1, // to detect computed objects (optional, since they are also signals)
 		get value() {
 			// 1. Dependency Tracking (as a Signal)
 			if (activeEffect) {
@@ -125,19 +150,6 @@ export const computed = (fn) => {
 			return cachedValue
 		}
 	}
-}
-
-/**
- * Cleans up the dependencies of an effect object.
- * This function is used internally by the effect API to clean up
- * after an effect has been run.
- * @param {Object} effectObj - The effect object to clean up.
- */
-function cleanup(effectObj) {
-	for (const subSet of effectObj.deps) {
-		subSet.delete(effectObj)
-	}
-	effectObj.deps.clear()
 }
 
 /**
@@ -166,6 +178,7 @@ export function batch(fn) {
 //#endregion signal
 
 //#region UI
+const SEUI = "__seui__"
 /**
  * @typedef {HTMLElementTagNameMap & { "fragment": DocumentFragment, "text": Text, "html": HTMLElement, "math": MathMLElement, "svg": SVGElement, "path": SVGPathElement, "circle": SVGCircleElement } & {[key: string]: HTMLElement} } HTMLElementTags
  * @typedef {{ [K in keyof HTMLElementTags]: (...arg0: UIProps) => HTMLElementTags[K] }} TagsProxy a proxy object for HTML tags
@@ -178,48 +191,49 @@ export function batch(fn) {
  * @prop {LifecycleCallback} onunmount a callback to be invoked when the element is unmounted
  */
 
-/** find object with "is" attribute.  e.g. { is: "custom-element" } */
+/**
+ * find object with "is" attribute.  e.g. { is: "custom-element" }
+ * @param {Array} c
+ */
 const getCreateOptions = (c) => c.find(p => p != null && typeof p === "object" && p.constructor === Object && typeof p.is === "string")
 
 /**
  * Create an HTML element with the specified tag and append children to it.
- * @param {string|null} namespace - The namespace URI of the element to be created.
- * @param {string} tag - The type of element to be created.
+ * @template K
+ * @param {string|null|undefined} namespace - The namespace URI of the element to be created.
+ * @param {K} tag - The type of element to be created.
  * @param {Array<any>} children - The children to append to the created element or properties.
- * @returns {Element|HTMLElement|DocumentFragment|Text} The created element with appended children.
  * @throws {TypeError} If the tag is not a string.
+ * @returns {HTMLElementTags[K]}
+ *
+ * @type {<K extends keyof HTMLElementTags>(namespace:string|null|undefined, tag:K, children:any[]) => HTMLElementTags[K]}
  */
 const createElement = (namespace, tag, children) => {
 	let element
 	// create element
 	if (namespace) {
-		element = document.createElementNS(
-			namespace, // e.g. "http://www.w3.org/1999/xhtml",
-			tag, // e.g. "div",
-			getCreateOptions(children)
-		)
+		//@ts-ignore tag is ok
+		element = document.createElementNS(namespace, tag, getCreateOptions(children))
 	} else if (tag === "fragment") {
 		element = document.createDocumentFragment()
 	} else if (tag === "text") {
 		element = document.createTextNode("")
 	} else {
-		element = document.createElement(
-			tag,
-			getCreateOptions(children)
-		)
+		//@ts-ignore tag is ok
+		element = document.createElement(tag, getCreateOptions(children))
 	}
-
+	// for cleanup & indentification
+	element[SEUI] = 1
 	// Process children or properties of an element.
 	for (const child of children) {
 		if (child != null) applyChildProperties(element, child, !!namespace)
 	}
-
 	// dispatch oncreate lifecycle event
 	element.dispatchEvent(new Event('create', {
 		bubbles: false,
 		cancelable: true,
 	}))
-
+	//@ts-ignore
 	return element
 }
 
@@ -233,34 +247,40 @@ const applyChildProperties = (element, child, useAttrOnly = false) => {
 	// Check if the child is a Signal type
 	// This is where you handle reactive text. Instead of just setting nodeValue once,
 	// you wrap it in an effect so it updates whenever the signal changes.
-	if (child && typeof child === "object" && /*child?.__signal__ !== undefined*/"__signal__" in child) {
-		const textNode = document.createTextNode("")
+	if (child && typeof child === "object" && SIGNAL in child) {
+		// if (child[SIGNAL] === 1) // Computed signal else Regular signal
+		const textNode = createElement("", "text", [])
 		element.appendChild(textNode)
-		// Link the signal to the text node
-		// and save the disposer
-		const stop = effect(() => textNode.nodeValue = String(child?.value ?? ""))
+		// Link the signal to the text node and save the disposer
+		const stop = effect(() => {
+			if (child.value instanceof Node) {
+				element.replaceChildren(child.value)
+			} else if (Array.isArray(child.value)) {
+				element.replaceChildren(...child.value.map(item =>
+					item instanceof Node ? item : createElement("", "text", [String(item)])
+				))
+			} else {
+				textNode.nodeValue = String(child.value)
+			}
+		})
 		// Attach the disposer to the element's cleanup bucket
 		addCleanup(element, stop)
 	} else if (typeof child === "string") {
-		// when element itself is Text node
 		if (element instanceof Text) {
 			element.nodeValue = child
 		} else {
-			// add string as text node
-			element.appendChild(document.createTextNode(child))
+			const textNode = createElement("", "text", [child])
+			element.appendChild(textNode)
 		}
-	} else if (child instanceof String || typeof child === "number"
-		|| typeof child === "boolean" || typeof child === "bigint") {
-		// when element itself is Text node
+	} else if (child instanceof String || typeof child === "number" || typeof child === "boolean" || typeof child === "bigint") {
 		if (element instanceof Text) {
 			element.nodeValue = typeof child === "string" ? child : child.toString()
 		} else {
-			// add as text node
-			element.appendChild(document.createTextNode(typeof child === "string" ? child : child.toString()))
+			const textNode = createElement("", "text", [typeof child === "string" ? child : child.toString()])
+			element.appendChild(textNode)
 		}
 	} else if (child instanceof Element || child instanceof DocumentFragment
 		|| (typeof child === "object" && typeof child.appendChild === "function")) {
-		// add as element
 		element.appendChild(child)
 	} else if (child.constructor === Object) {
 		// merge plain objects
@@ -280,7 +300,7 @@ const merge = (target, props, forceAttribute = false) => {
 		if (!props.hasOwnProperty(prop)) continue
 		const value = props[prop]
 		// handle signals (reactive) eg. computed
-		if (value && typeof value === "object" && /*value?.__signal__ !== undefined*/"__signal__" in value) {
+		if (value && typeof value === "object" && SIGNAL in value) {
 			const stop = effect(() => applySingleProp(target, prop, value.value, forceAttribute))
 			// Attach the disposer to the element's cleanup bucket
 			addCleanup(target, stop)
@@ -334,15 +354,15 @@ const applySingleProp = (target, prop, value, forceAttribute) => {
 }
 
 //#region MEMORY / CLEANUP
-
+const CLEANUP = "__cleanup__"
 /**
  * Adds a cleanup function to an element. When the element is removed from the DOM, all cleanup functions will be called.
  * @param {Object} el The element to add the cleanup function to.
  * @param {() => void} disposer The cleanup function to add.
  */
 const addCleanup = (el, disposer) => {
-	if (!el._cleanups) el._cleanups = []
-	el._cleanups.push(disposer)
+	if (!el[CLEANUP]) el[CLEANUP] = []
+	el[CLEANUP].push(disposer)
 }
 
 /**
@@ -351,39 +371,52 @@ const addCleanup = (el, disposer) => {
  * @param {Object} el The element to clean up.
  */
 const runCleanup = (el) => {
-	if (el._cleanups && el._cleanups.length) {
-		el._cleanups.forEach(stop => stop())
-		el._cleanups = []
+	// console.log("[CLEANUP]", el, el[CLEANUP])
+	if (el[CLEANUP] && el[CLEANUP].length) {
+		el[CLEANUP].forEach(stop => stop())
+		el[CLEANUP] = []
 	}
-	// Recursively clean up children!
-	Array.from(el.children || []).forEach(runCleanup)
+	// Recursively clean up children? note that removedNodes is now also recursive
+	//Array.from(el.children || []).forEach(runCleanup)
 }
 
 // Automatic cleanup detection
 // Notes: Node is the base class for all types of nodes, including Element,
 // but also Text, Comment, DocumentFragment, etc
+/** @param {Node} node */
+const onNodeMount = (node) => {
+	if (node.childNodes.length) {
+		Array.from(node.childNodes).filter(n => n[SEUI] === 1).forEach(onNodeMount)
+	}
+	// optional. target only seui created elements
+	if (node[SEUI] === 1/*node instanceof Element || node instanceof Text*/) {
+		// console.log("node added", node, node.constructor.name)
+		node.dispatchEvent(new Event('mount', {
+			bubbles: false,
+			cancelable: true
+		}))
+	}
+}
+/** @param {Node} node */
+const onNodeUnmount = (node) => {
+	if (node.childNodes.length) {
+		Array.from(node.childNodes).filter(n => n[SEUI] === 1).forEach(onNodeUnmount)
+	}
+	if (node[SEUI] === 1/*node instanceof Element || node instanceof Text || node instanceof DocumentFragment*/) {
+		// console.log("node removed", node, node.constructor.name)
+		node.dispatchEvent(new Event('unmount', {
+			bubbles: false,
+			cancelable: true
+		}))
+		runCleanup(node)
+	}
+}
 const observer = new MutationObserver((mutations) => {
 	for (const mutation of mutations) {
-		mutation.addedNodes.forEach(node => {
-			if (node instanceof Element || node instanceof Text) {
-				node.dispatchEvent(new Event('mount', {
-					bubbles: false,
-					cancelable: true
-				}))
-			}
-		})
-		mutation.removedNodes.forEach(node => {
-			if (node instanceof Element || node instanceof Text || node instanceof DocumentFragment) {
-				node.dispatchEvent(new Event('unmount', {
-					bubbles: false,
-					cancelable: true
-				}))
-				runCleanup(node)
-			}
-		})
+		mutation.addedNodes.forEach(onNodeMount)
+		mutation.removedNodes.forEach(onNodeUnmount)
 	}
 })
-
 // Start watching the whole document
 observer.observe(document.body, { childList: true, subtree: true })
 
@@ -399,7 +432,7 @@ observer.observe(document.body, { childList: true, subtree: true })
  */
 //@ts-ignore
 export const tags = new Proxy({}, {
-	get(target, prop, receiver) {
+	get(_target, prop, _receiver) {
 		return (...children) => {
 			if (typeof prop !== "string") {
 				throw new TypeError("Property name must be a string")
@@ -421,7 +454,7 @@ export const tags = new Proxy({}, {
  */
 //@ts-ignore
 export const ns = (namespaceURI) => new Proxy({}, {
-	get(target, prop, receiver) {
+	get(_target, prop, _receiver) {
 		return (...children) => {
 			if (typeof prop !== "string") {
 				throw new TypeError("Property name must be a string")
@@ -454,18 +487,17 @@ export const ns = (namespaceURI) => new Proxy({}, {
  * )
  */
 export const addStyle = (...style) => {
-	const fragment = document.createDocumentFragment()
+	const fragment = createElement("", "fragment", [])
 	for (const s of style) {
 		if (typeof s === "string") {
-			const styleElement = document.createElement("style")
+			const styleElement = createElement("", "style", [])
 			styleElement.textContent = s
 			fragment.appendChild(styleElement)
 		} else {
-			const linkElement = document.createElement("link")
+			const linkElement = createElement("", "link", [])
 			for (const key in s) {
-				if (s[key] !== undefined) {
-					linkElement.setAttribute(key, s[key])
-				}
+				//@ts-ignore
+				if (s[key] !== undefined && linkElement.setAttribute) linkElement.setAttribute(key, s[key])
 			}
 			fragment.appendChild(linkElement)
 		}

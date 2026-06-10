@@ -25,6 +25,7 @@ export default function Home() {
 		Navigation(
 			a({ href: "#!/" }, "Home"),
 			a({ href: "#!/info" }, "Info"),
+			a({ href: "#!/scanner" }, "Scanner"),
 			a({ href: "#!/contact" }, "Contact"),
 			a({ href: "#!/pubsub" }, "PubSub"),
 			a({ href: "#!/state-test" }, "State Test"),
